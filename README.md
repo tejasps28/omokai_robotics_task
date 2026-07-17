@@ -1,4 +1,4 @@
-# Natural-Language Ground Robot
+# Natural-Language Ground Robot Task 1
 
 This project turns a natural-language instruction into a bounded robot mission
 and executes it on a simulated TurtleBot3:
@@ -35,6 +35,14 @@ For Gemini:
 GEMINI_API_KEY=your-key
 ```
 
+For OpenAI:
+
+```text
+OPENAI_API_KEY=your-key
+```
+
+The demonstration uses Gemini, but either provider can be selected.
+
 Start Gazebo, localization, and Nav2:
 
 ```bash
@@ -68,7 +76,8 @@ For a credential-free demonstration, select the deterministic planner:
   "Patrol the inspection loop twice and return home."
 ```
 
-Use `--planner openai` to select the OpenAI adapter instead of Gemini.
+Use `--planner openai` or `--planner gemini` to select the corresponding
+provider adapter.
 
 ## Example missions
 
@@ -129,3 +138,20 @@ The source is split by responsibility:
 
 Original code in this repository is Apache-2.0. Third-party components retain
 their own licenses; see [sources](docs/sources.md).
+
+## Video Submission of Task 1
+
+[Task 1 demonstration video](https://drive.google.com/file/d/1Ue0LoBxiX2IKtk8JnhjX3pfpcOllZ7zF/view?usp=sharing)
+
+The video demonstrates the complete Task 1 pipeline with TurtleBot3 in Gazebo.
+At 02:30, the deterministic fake planner rejects a vaguely worded command;
+after switching to Gemini, the instruction “go for an inspection around once
+and return home” is interpreted and executed successfully.
+
+- The planner produces a strict mission schema containing the route
+  (`inspection_loop`, `aisle_sweep`, or `full_area_sweep`), ordered segments
+  (`clockwise`/`counterclockwise` or `forward`/`reverse`), repetitions, speed,
+  and return-home choice.
+- Local validation accepts only safe schema-compliant missions, then the
+  deterministic compiler converts the selected catalog route into ordered Nav2
+  goals for execution.
