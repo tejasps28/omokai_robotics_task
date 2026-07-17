@@ -1,0 +1,26 @@
+services:
+  robot:
+    environment:
+      DISPLAY: ${DISPLAY:?DISPLAY must be set for GUI mode}
+      XAUTHORITY: /tmp/.Xauthority
+      QT_X11_NO_MITSHM: "1"
+      LIBGL_ALWAYS_SOFTWARE: "1"
+      MESA_LOADER_DRIVER_OVERRIDE: llvmpipe
+      GALLIUM_DRIVER: llvmpipe
+      XDG_RUNTIME_DIR: /tmp/runtime-omokai
+      GZ_SIM_HEADLESS_RENDERING: "0"
+    volumes:
+      - type: bind
+        source: ${XAUTHORITY:?XAUTHORITY must point to an existing file}
+        target: /tmp/.Xauthority
+        read_only: true
+      - type: bind
+        source: /tmp/.X11-unix
+        target: /tmp/.X11-unix
+        read_only: true
+    command:
+      - ros2
+      - launch
+      - omokai_bringup
+      - core_navigation.launch.py
+      - gui:=true

@@ -1,0 +1,11 @@
+.env
+.coverage
+.pytest_cache/
+.vscode/
+.idea/
+__pycache__/
+*.py[cod]
+build/
+install/
+log/
+runtime/

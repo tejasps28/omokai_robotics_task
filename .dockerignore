@@ -1,0 +1,8 @@
+.git
+.env
+build
+install
+log
+runtime
+**/__pycache__
+**/*.pyc

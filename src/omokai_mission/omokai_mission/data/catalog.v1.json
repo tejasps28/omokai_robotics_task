@@ -1,0 +1,54 @@
+{
+  "catalog_version": "1.0",
+  "frame_id": "map",
+  "description": "Audited TurtleBot3 World route catalog for the Task 1 core pipeline. Poses are 2D map-frame goals in metres and radians.",
+  "home": {
+    "name": "home",
+    "x": -2.0,
+    "y": -0.5,
+    "yaw": 0.0
+  },
+  "routes": {
+    "inspection_loop": {
+      "description": "Closed inspection patrol supporting both directions and beginning near the verified simulation home pose.",
+      "closed": true,
+      "allowed_directions": ["clockwise", "counterclockwise"],
+      "waypoints": [
+        { "name": "corner_sw", "x": -1.5, "y": -1.5, "yaw": 0.0 },
+        { "name": "corner_se", "x": 1.5, "y": -1.5, "yaw": 1.5708 },
+        { "name": "corner_ne", "x": 1.5, "y": 1.5, "yaw": 3.1416 },
+        { "name": "corner_nw", "x": -1.5, "y": 1.5, "yaw": -1.5708 }
+      ]
+    },
+    "aisle_sweep": {
+      "description": "Serpentine sweep through the two vertical aisles between the central obstacle columns.",
+      "closed": false,
+      "allowed_directions": ["forward", "reverse"],
+      "waypoints": [
+        { "name": "west_aisle_south", "x": -0.55, "y": -1.55, "yaw": 1.5708 },
+        { "name": "west_aisle_north", "x": -0.55, "y": 1.55, "yaw": 0.0 },
+        { "name": "east_aisle_north", "x": 0.55, "y": 1.55, "yaw": -1.5708 },
+        { "name": "east_aisle_south", "x": 0.55, "y": -1.55, "yaw": -1.5708 }
+      ]
+    },
+    "full_area_sweep": {
+      "description": "Open coverage route across four horizontal passes, both central vertical aisles, and the outer turning corridors.",
+      "closed": false,
+      "allowed_directions": ["forward", "reverse"],
+      "waypoints": [
+        { "name": "outer_south_west", "x": -1.65, "y": -1.65, "yaw": 0.0 },
+        { "name": "outer_south_east", "x": 1.65, "y": -1.65, "yaw": 1.5708 },
+        { "name": "lower_lane_east", "x": 1.65, "y": -0.55, "yaw": 3.1416 },
+        { "name": "lower_lane_west", "x": -1.65, "y": -0.55, "yaw": 1.5708 },
+        { "name": "upper_lane_west", "x": -1.65, "y": 0.55, "yaw": 0.0 },
+        { "name": "upper_lane_east", "x": 1.65, "y": 0.55, "yaw": 1.5708 },
+        { "name": "outer_north_east", "x": 1.65, "y": 1.65, "yaw": 3.1416 },
+        { "name": "outer_north_west", "x": -1.65, "y": 1.65, "yaw": -0.0907 },
+        { "name": "west_aisle_north", "x": -0.55, "y": 1.55, "yaw": -1.5708 },
+        { "name": "west_aisle_south", "x": -0.55, "y": -1.55, "yaw": 0.0 },
+        { "name": "east_aisle_south", "x": 0.55, "y": -1.55, "yaw": 1.5708 },
+        { "name": "east_aisle_north", "x": 0.55, "y": 1.55, "yaw": 1.5708 }
+      ]
+    }
+  }
+}

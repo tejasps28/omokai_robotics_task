@@ -1,0 +1,48 @@
+name: omokai-task1
+
+services:
+  robot:
+    build:
+      context: .
+      dockerfile: docker/Dockerfile
+      args:
+        HOST_UID: ${HOST_UID:-1000}
+        HOST_GID: ${HOST_GID:-1000}
+    image: omokai-task1:latest
+    container_name: omokai-task1
+    init: true
+    network_mode: host
+    ipc: host
+    shm_size: 512mb
+    environment:
+      ROS_DOMAIN_ID: ${ROS_DOMAIN_ID:-42}
+      RMW_IMPLEMENTATION: rmw_cyclonedds_cpp
+      TURTLEBOT3_MODEL: ${TURTLEBOT3_MODEL:-waffle_pi}
+      GZ_VERBOSITY: ${GZ_VERBOSITY:-2}
+      GZ_SIM_HEADLESS_RENDERING: "1"
+      OPENAI_API_KEY: ${OPENAI_API_KEY:-}
+      OMOKAI_OPENAI_MODEL: ${OMOKAI_OPENAI_MODEL:-gpt-5.6}
+      GEMINI_API_KEY: ${GEMINI_API_KEY:-}
+      OMOKAI_GEMINI_MODEL: ${OMOKAI_GEMINI_MODEL:-gemini-2.5-flash}
+    volumes:
+      - type: bind
+        source: ./runtime/artifacts
+        target: /data/artifacts
+      - type: bind
+        source: ./runtime/ros_logs
+        target: /home/omokai/.ros
+    security_opt:
+      - no-new-privileges:true
+    command:
+      - ros2
+      - launch
+      - omokai_bringup
+      - core_navigation.launch.py
+      - gui:=false
+    healthcheck:
+      test: ["CMD", "/usr/local/bin/omokai-healthcheck"]
+      interval: 5s
+      timeout: 20s
+      retries: 24
+      start_period: 30s
+    stop_grace_period: 20s
