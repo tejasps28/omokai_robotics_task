@@ -20,6 +20,7 @@ from .session import (
     ExplorationEvent,
     ExplorationResult,
     ExplorationSession,
+    ExplorationSnapshot,
     ExplorationState,
 )
 
@@ -32,6 +33,7 @@ __all__ = [
     'ExplorationEvent',
     'ExplorationResult',
     'ExplorationSession',
+    'ExplorationSnapshot',
     'ExplorationState',
     'GridMetadata',
     'MapProgress',

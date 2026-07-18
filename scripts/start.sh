@@ -36,8 +36,10 @@ compose=(docker compose --project-directory "${root}" -f "${root}/compose.yaml")
 export OMOKAI_MODE="${mode}"
 if [[ "${mode}" == slam ]]; then
   export OMOKAI_LAUNCH_FILE=slam_navigation.launch.py
+  export OMOKAI_RVIZ="${gui}"
 else
   export OMOKAI_LAUNCH_FILE=core_navigation.launch.py
+  export OMOKAI_RVIZ=false
 fi
 
 if [[ "${gui}" == true ]]; then

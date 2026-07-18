@@ -78,6 +78,7 @@ def generate_launch_description() -> LaunchDescription:
     return LaunchDescription(
         [
             DeclareLaunchArgument('gui', default_value='false'),
+            DeclareLaunchArgument('rviz', default_value='false'),
             DeclareLaunchArgument('use_sim_time', default_value='true'),
             DeclareLaunchArgument('x_pose', default_value='-2.0'),
             DeclareLaunchArgument('y_pose', default_value='-0.5'),

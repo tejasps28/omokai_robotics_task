@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 from datetime import datetime, timezone
+from pathlib import Path
 from time import monotonic
 from typing import Optional, Sequence
 
@@ -15,7 +16,9 @@ from rclpy.parameter import Parameter
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from rclpy.time import Time
 from tf2_ros import Buffer, TransformException, TransformListener
+from std_srvs.srv import Trigger
 
+from .artifacts import ExplorationArtifactWriter
 from .frontier import FrontierConfig
 from .grid import measure_map_progress
 from .ros_bridge import (
@@ -45,6 +48,7 @@ class ExplorationCoordinator(Node):
         config: ExplorationConfig,
         speed_mps: float,
         server_timeout_sec: float,
+        artifact_root: Path,
     ) -> None:
         super().__init__(
             'omokai_exploration',
@@ -59,6 +63,11 @@ class ExplorationCoordinator(Node):
             self._navigation,
             config=config,
         )
+        self._artifacts = ExplorationArtifactWriter(
+            artifact_root,
+            exploration_id,
+        )
+        self._persisted_event_count = 0
         self._navigation.bind_outcomes(self._session)
         self._tf_buffer = Buffer(cache_time=Duration(seconds=10.0))
         self._tf_listener = TransformListener(self._tf_buffer, self)
@@ -73,6 +82,11 @@ class ExplorationCoordinator(Node):
             self._on_map,
             map_qos,
         )
+        self._cancel_service = self.create_service(
+            Trigger,
+            '~/cancel',
+            self._on_cancel,
+        )
         self._latest_map: Optional[OccupancyGridMessage] = None
         self._map_version = 0
         self._processed_map_version = 0
@@ -85,6 +99,7 @@ class ExplorationCoordinator(Node):
         self.get_logger().info(
             f'Exploration {exploration_id} waiting for Nav2 and a SLAM map'
         )
+        self._flush_artifacts()
 
     @property
     def done(self) -> bool:
@@ -96,6 +111,17 @@ class ExplorationCoordinator(Node):
 
     def request_cancel(self) -> bool:
         return self._session.request_cancel()
+
+    def _on_cancel(self, _request: Trigger.Request, response: Trigger.Response):
+        accepted = self.request_cancel()
+        response.success = accepted
+        response.message = (
+            'cancellation requested'
+            if accepted
+            else f'cannot cancel while state is {self._session.state.value}'
+        )
+        self._flush_artifacts()
+        return response
 
     def _on_map(self, message: OccupancyGridMessage) -> None:
         self._latest_map = message
@@ -111,6 +137,7 @@ class ExplorationCoordinator(Node):
                         'Nav2 NavigateToPose server did not become ready'
                     )
                     self._done = True
+                    self._flush_artifacts()
                 return
             self._started = True
             self._session.start()
@@ -165,6 +192,7 @@ class ExplorationCoordinator(Node):
                 f'{self._session.state.value}'
             )
             self._last_state = self._session.state
+        self._flush_artifacts()
         if self._session.state.terminal:
             self._finalize()
 
@@ -175,11 +203,22 @@ class ExplorationCoordinator(Node):
             0 if result.state is ExplorationState.COMPLETED else 1
         )
         self._done = True
+        self._flush_artifacts()
+        self._artifacts.write_result(result)
         self.get_logger().info(
             f'Exploration finished: state={result.state.value}, '
             f'reason={result.reason}, completed_goals={result.completed_goals}, '
             f'failed_goals={result.failed_goals}'
         )
+
+    def _flush_artifacts(self) -> None:
+        events = self._session.events
+        if len(events) > self._persisted_event_count:
+            self._artifacts.append_events(
+                events[self._persisted_event_count :]
+            )
+            self._persisted_event_count = len(events)
+        self._artifacts.write_status(self._session.snapshot)
 
 
 def _parse_args(argv: Optional[Sequence[str]]) -> argparse.Namespace:
@@ -187,6 +226,11 @@ def _parse_args(argv: Optional[Sequence[str]]) -> argparse.Namespace:
         description='Explore the live SLAM map using deterministic frontiers.'
     )
     parser.add_argument('--exploration-id', default=_default_exploration_id())
+    parser.add_argument(
+        '--artifact-root',
+        type=Path,
+        default=Path('/data/artifacts'),
+    )
     parser.add_argument('--speed-mps', type=float, default=0.15)
     parser.add_argument('--server-timeout-sec', type=float, default=30.0)
     parser.add_argument('--goal-timeout-sec', type=float, default=120.0)
@@ -242,6 +286,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
         config=config,
         speed_mps=options.speed_mps,
         server_timeout_sec=options.server_timeout_sec,
+        artifact_root=options.artifact_root,
     )
     try:
         while rclpy.ok() and not node.done:

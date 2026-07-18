@@ -106,6 +106,17 @@ class ExplorationResult:
     duration_sec: float
 
 
+@dataclass(frozen=True)
+class ExplorationSnapshot:
+    exploration_id: str
+    state: ExplorationState
+    completed_goals: int
+    failed_goals: int
+    visited_count: int
+    blacklist_count: int
+    active_goal_handle: Optional[str]
+
+
 class ExplorationNavigation(Protocol):
     def dispatch(self, candidate: FrontierCandidate) -> str:
         """Submit one frontier candidate and return a unique goal handle."""
@@ -199,6 +210,18 @@ class ExplorationSession:
             blacklisted_points=tuple(self._blacklist),
             visited_points=tuple(self._visited),
             duration_sec=self._ended_at - self._started_at,
+        )
+
+    @property
+    def snapshot(self) -> ExplorationSnapshot:
+        return ExplorationSnapshot(
+            exploration_id=self._exploration_id,
+            state=self._state,
+            completed_goals=self._completed_goals,
+            failed_goals=self._failed_goals,
+            visited_count=len(self._visited),
+            blacklist_count=len(self._blacklist),
+            active_goal_handle=self._active_handle,
         )
 
     def start(self) -> None:
