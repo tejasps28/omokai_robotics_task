@@ -17,6 +17,7 @@ from rclpy.time import Time
 from tf2_ros import Buffer, TransformException, TransformListener
 
 from .frontier import FrontierConfig
+from .grid import measure_map_progress
 from .ros_bridge import (
     ExplorationNav2Adapter,
     grid_from_message,
@@ -135,6 +136,12 @@ class ExplorationCoordinator(Node):
                 )
             else:
                 self._processed_map_version = self._map_version
+                progress = measure_map_progress(grid)
+                self.get_logger().info(
+                    f'Map progress: known_area={progress.known_area_m2:.2f}m^2, '
+                    f'known={progress.known_fraction:.1%}, '
+                    f'unknown_cells={progress.unknown_cells}'
+                )
                 dispatched = self._session.observe_map(
                     grid,
                     robot_x,
@@ -197,6 +204,7 @@ def _parse_args(argv: Optional[Sequence[str]]) -> argparse.Namespace:
     parser.add_argument('--min-cluster-size', type=int, default=5)
     parser.add_argument('--clearance-m', type=float, default=0.25)
     parser.add_argument('--blacklist-radius-m', type=float, default=0.5)
+    parser.add_argument('--visited-radius-m', type=float, default=0.6)
     options = parser.parse_args(argv)
     if options.server_timeout_sec <= 0.0:
         parser.error('--server-timeout-sec must be greater than zero')
@@ -215,6 +223,7 @@ def main(argv: Optional[Sequence[str]] = None) -> int:
                 min_cluster_size=options.min_cluster_size,
                 clearance_m=options.clearance_m,
                 blacklist_radius_m=options.blacklist_radius_m,
+                visited_radius_m=options.visited_radius_m,
             ),
             goal_timeout_sec=options.goal_timeout_sec,
             mission_timeout_sec=options.mission_timeout_sec,

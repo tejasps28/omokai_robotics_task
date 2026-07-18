@@ -1,7 +1,12 @@
 import math
 import unittest
 
-from omokai_exploration import Cell, GridMetadata, OccupancyGrid
+from omokai_exploration import (
+    Cell,
+    GridMetadata,
+    OccupancyGrid,
+    measure_map_progress,
+)
 
 
 def make_grid() -> OccupancyGrid:
@@ -122,6 +127,15 @@ class OccupancyGridTest(unittest.TestCase):
         ):
             with self.subTest(point=point), self.assertRaises(IndexError):
                 grid.world_to_cell(*point)
+
+    def test_measures_known_map_area_and_fraction(self) -> None:
+        progress = measure_map_progress(make_grid())
+
+        self.assertEqual(6, progress.total_cells)
+        self.assertEqual(5, progress.known_cells)
+        self.assertEqual(1, progress.unknown_cells)
+        self.assertAlmostEqual(1.25, progress.known_area_m2)
+        self.assertAlmostEqual(5.0 / 6.0, progress.known_fraction)
 
 
 if __name__ == '__main__':

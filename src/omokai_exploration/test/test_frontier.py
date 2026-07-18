@@ -47,6 +47,7 @@ class FrontierConfigTest(unittest.TestCase):
             {'min_cluster_size': 0},
             {'clearance_m': -0.1},
             {'blacklist_radius_m': math.inf},
+            {'visited_radius_m': -0.1},
             {'distance_weight': True},
         ):
             with self.subTest(changes=changes), self.assertRaises(ValueError):
@@ -178,6 +179,27 @@ class FrontierExtractionTest(unittest.TestCase):
         self.assertEqual(1, len(candidates))
         self.assertGreaterEqual(candidates[0].goal.column, 4)
 
+    def test_visited_radius_forces_spatially_different_goal(self) -> None:
+        grid = two_frontier_grid()
+        config = FrontierConfig(
+            min_cluster_size=1,
+            clearance_m=0.0,
+            visited_radius_m=2.5,
+            information_gain_weight=1.0,
+            distance_weight=0.0,
+        )
+
+        candidates = rank_frontiers(
+            grid,
+            robot_x=0.0,
+            robot_y=0.0,
+            config=config,
+            visited=((1.5, 1.5),),
+        )
+
+        self.assertEqual(1, len(candidates))
+        self.assertGreaterEqual(candidates[0].goal.column, 4)
+
     def test_rejects_non_finite_robot_or_blacklist_points(self) -> None:
         grid = two_frontier_grid()
 
@@ -189,6 +211,13 @@ class FrontierExtractionTest(unittest.TestCase):
                 robot_x=0.0,
                 robot_y=0.0,
                 blacklist=((0.0, math.inf),),
+            )
+        with self.assertRaises(ValueError):
+            rank_frontiers(
+                grid,
+                robot_x=0.0,
+                robot_y=0.0,
+                visited=((math.nan, 0.0),),
             )
 
 

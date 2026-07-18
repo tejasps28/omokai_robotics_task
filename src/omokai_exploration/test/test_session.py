@@ -121,6 +121,7 @@ class ExplorationSessionTest(unittest.TestCase):
 
     def test_dispatches_frontier_then_waits_for_new_map_after_success(self) -> None:
         handle = self.start_and_dispatch()
+        first_goal = self.session.active_candidate
 
         self.assertEqual(ExplorationState.NAVIGATING, self.session.state)
         self.session.navigation_succeeded(handle)
@@ -130,7 +131,39 @@ class ExplorationSessionTest(unittest.TestCase):
             self.session.state,
         )
         self.assertIsNone(self.session.active_goal_handle)
+        self.assertEqual(
+            ((first_goal.goal_x, first_goal.goal_y),),
+            self.session.visited,
+        )
         self.assertEqual(1, len(self.navigation.dispatched))
+
+    def test_successful_goal_is_not_immediately_dispatched_again(self) -> None:
+        handle = self.start_and_dispatch()
+        first_goal = self.session.active_candidate
+        self.session.navigation_succeeded(handle)
+
+        self.assertTrue(self.session.observe_map(frontier_grid(), 2.5, 1.5))
+        second_goal = self.session.active_candidate
+
+        self.assertNotEqual(first_goal.goal, second_goal.goal)
+
+    def test_visited_frontiers_eventually_complete_without_redispatch(self) -> None:
+        first_handle = self.start_and_dispatch()
+        self.session.navigation_succeeded(first_handle)
+        self.session.observe_map(frontier_grid(), 2.5, 1.5)
+        second_handle = self.session.active_goal_handle
+        self.session.navigation_succeeded(second_handle)
+
+        self.assertFalse(
+            self.session.observe_map(frontier_grid(), 2.5, 1.5)
+        )
+        self.assertFalse(
+            self.session.observe_map(frontier_grid(), 2.5, 1.5)
+        )
+
+        self.assertEqual(ExplorationState.COMPLETED, self.session.state)
+        self.assertEqual('no_frontiers', self.session.result.reason)
+        self.assertEqual(2, self.session.result.completed_goals)
 
     def test_optional_goal_limit_produces_bounded_completion(self) -> None:
         limited = ExplorationSession(
@@ -311,6 +344,7 @@ class ExplorationSessionTest(unittest.TestCase):
             [event.sequence for event in self.session.events],
         )
         self.assertIsInstance(result.blacklisted_points, tuple)
+        self.assertIsInstance(result.visited_points, tuple)
 
 
 if __name__ == '__main__':

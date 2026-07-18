@@ -102,6 +102,7 @@ class ExplorationResult:
     completed_goals: int
     failed_goals: int
     blacklisted_points: tuple[tuple[float, float], ...]
+    visited_points: tuple[tuple[float, float], ...]
     duration_sec: float
 
 
@@ -154,6 +155,7 @@ class ExplorationSession:
         self._completed_goals = 0
         self._failed_goals = 0
         self._blacklist: list[tuple[float, float]] = []
+        self._visited: list[tuple[float, float]] = []
         self._reason = ''
         self._events: list[ExplorationEvent] = []
         self._emit('session_created')
@@ -175,6 +177,10 @@ class ExplorationSession:
         return tuple(self._blacklist)
 
     @property
+    def visited(self) -> tuple[tuple[float, float], ...]:
+        return tuple(self._visited)
+
+    @property
     def events(self) -> tuple[ExplorationEvent, ...]:
         return tuple(self._events)
 
@@ -191,6 +197,7 @@ class ExplorationSession:
             completed_goals=self._completed_goals,
             failed_goals=self._failed_goals,
             blacklisted_points=tuple(self._blacklist),
+            visited_points=tuple(self._visited),
             duration_sec=self._ended_at - self._started_at,
         )
 
@@ -223,6 +230,7 @@ class ExplorationSession:
             robot_y,
             config=self._config.frontier,
             blacklist=self._blacklist,
+            visited=self._visited,
         )
         self._emit(
             'map_evaluated',
@@ -273,8 +281,19 @@ class ExplorationSession:
 
     def navigation_succeeded(self, goal_handle: str) -> None:
         self._require_navigation_handle(goal_handle)
+        assert self._active_candidate is not None
+        self._visited.append(
+            (
+                self._active_candidate.goal_x,
+                self._active_candidate.goal_y,
+            )
+        )
         self._completed_goals += 1
-        self._emit('navigation_succeeded', goal_handle=goal_handle)
+        self._emit(
+            'navigation_succeeded',
+            goal_handle=goal_handle,
+            visited_count=len(self._visited),
+        )
         self._clear_active_goal()
         if (
             self._config.max_completed_goals is not None

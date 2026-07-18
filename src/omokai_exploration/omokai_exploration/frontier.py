@@ -18,6 +18,7 @@ class FrontierConfig:
     min_cluster_size: int = 5
     clearance_m: float = 0.25
     blacklist_radius_m: float = 0.5
+    visited_radius_m: float = 0.6
     information_gain_weight: float = 1.0
     distance_weight: float = 1.0
 
@@ -49,6 +50,7 @@ class FrontierConfig:
         for name, value in (
             ('clearance_m', self.clearance_m),
             ('blacklist_radius_m', self.blacklist_radius_m),
+            ('visited_radius_m', self.visited_radius_m),
             ('information_gain_weight', self.information_gain_weight),
             ('distance_weight', self.distance_weight),
         ):
@@ -127,6 +129,7 @@ def rank_frontiers(
     robot_y: float,
     config: FrontierConfig = FrontierConfig(),
     blacklist: Iterable[tuple[float, float]] = (),
+    visited: Iterable[tuple[float, float]] = (),
 ) -> tuple[FrontierCandidate, ...]:
     """Extract, filter, and rank frontiers for the current robot position."""
 
@@ -134,6 +137,9 @@ def rank_frontiers(
     blocked_points = tuple(blacklist)
     for index, (x, y) in enumerate(blocked_points):
         _require_finite_point(f'blacklist[{index}]', x, y)
+    visited_points = tuple(visited)
+    for index, (x, y) in enumerate(visited_points):
+        _require_finite_point(f'visited[{index}]', x, y)
 
     candidates = []
     for cluster in frontier_clusters(grid, frontier_cells(grid, config)):
@@ -143,7 +149,18 @@ def rank_frontiers(
             cell
             for cell in cluster
             if _has_clearance(grid, cell, config)
-            and not _is_blacklisted(grid, cell, blocked_points, config)
+            and not _is_near_points(
+                grid,
+                cell,
+                blocked_points,
+                config.blacklist_radius_m,
+            )
+            and not _is_near_points(
+                grid,
+                cell,
+                visited_points,
+                config.visited_radius_m,
+            )
         )
         if not eligible:
             continue
@@ -218,17 +235,17 @@ def _has_clearance(
     return True
 
 
-def _is_blacklisted(
+def _is_near_points(
     grid: OccupancyGrid,
     cell: Cell,
-    blacklist: tuple[tuple[float, float], ...],
-    config: FrontierConfig,
+    points: tuple[tuple[float, float], ...],
+    radius_m: float,
 ) -> bool:
     x, y = grid.cell_center(cell)
     return any(
         math.hypot(x - blocked_x, y - blocked_y)
-        <= config.blacklist_radius_m
-        for blocked_x, blocked_y in blacklist
+        <= radius_m
+        for blocked_x, blocked_y in points
     )
 
 

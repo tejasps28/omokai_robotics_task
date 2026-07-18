@@ -183,3 +183,29 @@ class OccupancyGrid:
         if not self.contains(cell):
             raise IndexError(f'point is outside the grid: ({x}, {y})')
         return cell
+
+
+@dataclass(frozen=True)
+class MapProgress:
+    """Simple map-growth measurements independent of changing map bounds."""
+
+    total_cells: int
+    known_cells: int
+    unknown_cells: int
+    known_area_m2: float
+
+    @property
+    def known_fraction(self) -> float:
+        return self.known_cells / self.total_cells
+
+
+def measure_map_progress(grid: OccupancyGrid) -> MapProgress:
+    known_cells = sum(value != -1 for value in grid.cells)
+    return MapProgress(
+        total_cells=grid.metadata.cell_count,
+        known_cells=known_cells,
+        unknown_cells=grid.metadata.cell_count - known_cells,
+        known_area_m2=(
+            known_cells * grid.metadata.resolution * grid.metadata.resolution
+        ),
+    )
