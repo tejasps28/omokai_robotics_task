@@ -9,11 +9,24 @@ compose=(
 )
 
 usage() {
-  echo "Usage: $0 save-map [map-name]"
+  echo "Usage: $0 explore [options] | save-map [map-name]"
 }
 
 command="${1:-}"
 case "${command}" in
+  explore)
+    shift
+    slam_state="$(
+      "${compose[@]}" exec -T robot /usr/local/bin/omokai-entrypoint \
+        ros2 lifecycle get /slam_toolbox 2>/dev/null || true
+    )"
+    [[ "${slam_state}" == active* ]] || {
+      echo "Start online mapping first with ./scripts/start.sh --slam." >&2
+      exit 1
+    }
+    "${compose[@]}" exec -T robot /usr/local/bin/omokai-entrypoint \
+      ros2 run omokai_exploration explore "$@"
+    ;;
   save-map)
     map_name="${2:-map-$(date -u +%Y%m%dT%H%M%SZ)}"
     [[ "${map_name}" =~ ^[A-Za-z0-9][A-Za-z0-9_-]*$ ]] || {

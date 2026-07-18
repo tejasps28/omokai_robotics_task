@@ -17,4 +17,9 @@ setup(
     maintainer_email='tejasps28@gmail.com',
     description='Deterministic autonomous exploration for occupancy-grid maps.',
     license='Apache-2.0',
+    entry_points={
+        'console_scripts': [
+            'explore = omokai_exploration.coordinator:main',
+        ],
+    },
 )

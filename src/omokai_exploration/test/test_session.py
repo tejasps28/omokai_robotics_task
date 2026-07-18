@@ -97,6 +97,7 @@ class ExplorationConfigTest(unittest.TestCase):
             {'cancel_timeout_sec': float('inf')},
             {'completion_confirmations': 0},
             {'max_failed_goals': 1.5},
+            {'max_completed_goals': 0},
         ):
             with self.subTest(changes=changes), self.assertRaises(ValueError):
                 ExplorationConfig(**changes)
@@ -130,6 +131,20 @@ class ExplorationSessionTest(unittest.TestCase):
         )
         self.assertIsNone(self.session.active_goal_handle)
         self.assertEqual(1, len(self.navigation.dispatched))
+
+    def test_optional_goal_limit_produces_bounded_completion(self) -> None:
+        limited = ExplorationSession(
+            'exploration-limited',
+            self.navigation,
+            config=config(max_completed_goals=1),
+            clock=self.clock,
+        )
+        limited.start()
+        limited.observe_map(frontier_grid(), 2.5, 1.5)
+        limited.navigation_succeeded(limited.active_goal_handle)
+
+        self.assertEqual(ExplorationState.COMPLETED, limited.state)
+        self.assertEqual('goal_limit', limited.result.reason)
 
     def test_requires_repeated_empty_maps_before_completion(self) -> None:
         self.session.start()

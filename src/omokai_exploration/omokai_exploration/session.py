@@ -47,6 +47,7 @@ class ExplorationConfig:
     cancel_timeout_sec: float = 10.0
     completion_confirmations: int = 3
     max_failed_goals: int = 8
+    max_completed_goals: Optional[int] = None
 
     def __post_init__(self) -> None:
         if not isinstance(self.frontier, FrontierConfig):
@@ -74,6 +75,14 @@ class ExplorationConfig:
                 or value <= 0
             ):
                 raise ValueError(f'{name} must be a positive integer')
+        if self.max_completed_goals is not None and (
+            isinstance(self.max_completed_goals, bool)
+            or not isinstance(self.max_completed_goals, int)
+            or self.max_completed_goals <= 0
+        ):
+            raise ValueError(
+                'max_completed_goals must be a positive integer or None'
+            )
 
 
 @dataclass(frozen=True)
@@ -156,6 +165,10 @@ class ExplorationSession:
     @property
     def active_goal_handle(self) -> Optional[str]:
         return self._active_handle
+
+    @property
+    def active_candidate(self) -> Optional[FrontierCandidate]:
+        return self._active_candidate
 
     @property
     def blacklist(self) -> tuple[tuple[float, float], ...]:
@@ -263,6 +276,12 @@ class ExplorationSession:
         self._completed_goals += 1
         self._emit('navigation_succeeded', goal_handle=goal_handle)
         self._clear_active_goal()
+        if (
+            self._config.max_completed_goals is not None
+            and self._completed_goals >= self._config.max_completed_goals
+        ):
+            self._finish(ExplorationState.COMPLETED, 'goal_limit')
+            return
         self._wait_for_map()
 
     def navigation_failed(self, goal_handle: str, reason: str) -> None:
