@@ -8,11 +8,25 @@ from .frontier import (
     rank_frontiers,
 )
 from .grid import Cell, GridMetadata, OccupancyGrid
+from .session import (
+    CancellationCause,
+    ExplorationConfig,
+    ExplorationEvent,
+    ExplorationResult,
+    ExplorationSession,
+    ExplorationState,
+)
 
 __all__ = [
     'Cell',
+    'CancellationCause',
     'FrontierCandidate',
     'FrontierConfig',
+    'ExplorationConfig',
+    'ExplorationEvent',
+    'ExplorationResult',
+    'ExplorationSession',
+    'ExplorationState',
     'GridMetadata',
     'OccupancyGrid',
     'frontier_cells',
