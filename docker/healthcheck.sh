@@ -12,11 +12,18 @@ for topic in /clock /odom /scan /tf; do
   }
 done
 
-amcl_state="$(timeout 4 ros2 lifecycle get /amcl 2>/dev/null)"
 navigator_state="$(timeout 4 ros2 lifecycle get /bt_navigator 2>/dev/null)"
 actions="$(timeout 4 ros2 action list 2>/dev/null)"
 
-[[ "${amcl_state}" == active* ]] || exit 1
 [[ "${navigator_state}" == active* ]] || exit 1
 [[ "${actions}" == *"/navigate_to_pose"* ]] || exit 1
-timeout 4 ros2 topic echo /amcl_pose --once >/dev/null 2>&1
+
+if [[ "${OMOKAI_MODE:-core}" == slam ]]; then
+  slam_state="$(timeout 4 ros2 lifecycle get /slam_toolbox 2>/dev/null)"
+  [[ "${slam_state}" == active* ]] || exit 1
+  timeout 4 ros2 topic echo /map --once >/dev/null 2>&1
+else
+  amcl_state="$(timeout 4 ros2 lifecycle get /amcl 2>/dev/null)"
+  [[ "${amcl_state}" == active* ]] || exit 1
+  timeout 4 ros2 topic echo /amcl_pose --once >/dev/null 2>&1
+fi

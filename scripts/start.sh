@@ -6,15 +6,39 @@ export HOST_UID="${HOST_UID:-$(id -u)}"
 export HOST_GID="${HOST_GID:-$(id -g)}"
 
 gui=false
-if [[ "${1:-}" == "--gui" ]]; then
-  gui=true
-elif (( $# > 0 )); then
-  echo "Usage: $0 [--gui]" >&2
-  exit 2
-fi
+mode=core
+while (( $# > 0 )); do
+  case "$1" in
+    --gui)
+      gui=true
+      ;;
+    --slam)
+      mode=slam
+      ;;
+    --help|-h)
+      echo "Usage: $0 [--gui] [--slam]"
+      exit 0
+      ;;
+    *)
+      echo "Usage: $0 [--gui] [--slam]" >&2
+      exit 2
+      ;;
+  esac
+  shift
+done
 
-mkdir -p "${root}/runtime/artifacts" "${root}/runtime/ros_logs"
+mkdir -p \
+  "${root}/runtime/artifacts" \
+  "${root}/runtime/maps" \
+  "${root}/runtime/ros_logs"
 compose=(docker compose --project-directory "${root}" -f "${root}/compose.yaml")
+
+export OMOKAI_MODE="${mode}"
+if [[ "${mode}" == slam ]]; then
+  export OMOKAI_LAUNCH_FILE=slam_navigation.launch.py
+else
+  export OMOKAI_LAUNCH_FILE=core_navigation.launch.py
+fi
 
 if [[ "${gui}" == true ]]; then
   [[ -n "${DISPLAY:-}" ]] || {
