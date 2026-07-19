@@ -4,7 +4,7 @@
   gz_type_name: gz.msgs.Clock
   direction: GZ_TO_ROS
 
-- ros_topic_name: /tf
+- ros_topic_name: /robot1/tf
   gz_topic_name: /robot1/tf
   ros_type_name: tf2_msgs/msg/TFMessage
   gz_type_name: gz.msgs.Pose_V
@@ -21,7 +21,7 @@
   direction: GZ_TO_ROS
 - ros_topic_name: /robot1/cmd_vel
   gz_topic_name: /robot1/cmd_vel
-  ros_type_name: geometry_msgs/msg/TwistStamped
+  ros_type_name: geometry_msgs/msg/Twist
   gz_type_name: gz.msgs.Twist
   direction: ROS_TO_GZ
 - ros_topic_name: /robot1/imu
@@ -35,7 +35,7 @@
   gz_type_name: gz.msgs.LaserScan
   direction: GZ_TO_ROS
 
-- ros_topic_name: /tf
+- ros_topic_name: /robot2/tf
   gz_topic_name: /robot2/tf
   ros_type_name: tf2_msgs/msg/TFMessage
   gz_type_name: gz.msgs.Pose_V
@@ -52,7 +52,7 @@
   direction: GZ_TO_ROS
 - ros_topic_name: /robot2/cmd_vel
   gz_topic_name: /robot2/cmd_vel
-  ros_type_name: geometry_msgs/msg/TwistStamped
+  ros_type_name: geometry_msgs/msg/Twist
   gz_type_name: gz.msgs.Twist
   direction: ROS_TO_GZ
 - ros_topic_name: /robot2/imu
@@ -66,7 +66,7 @@
   gz_type_name: gz.msgs.LaserScan
   direction: GZ_TO_ROS
 
-- ros_topic_name: /tf
+- ros_topic_name: /robot3/tf
   gz_topic_name: /robot3/tf
   ros_type_name: tf2_msgs/msg/TFMessage
   gz_type_name: gz.msgs.Pose_V
@@ -83,7 +83,7 @@
   direction: GZ_TO_ROS
 - ros_topic_name: /robot3/cmd_vel
   gz_topic_name: /robot3/cmd_vel
-  ros_type_name: geometry_msgs/msg/TwistStamped
+  ros_type_name: geometry_msgs/msg/Twist
   gz_type_name: gz.msgs.Twist
   direction: ROS_TO_GZ
 - ros_topic_name: /robot3/imu
