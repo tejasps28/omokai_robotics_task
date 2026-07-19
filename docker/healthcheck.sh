@@ -5,7 +5,29 @@ source "/opt/ros/${ROS_DISTRO}/setup.bash"
 source /opt/omokai_ws/install/setup.bash
 
 topics="$(timeout 8 ros2 topic list 2>/dev/null)"
-for topic in /clock /odom /scan /tf; do
+for topic in /clock /tf; do
+  [[ "${topics}" == *"${topic}"* ]] || {
+    echo "Missing required topic: ${topic}" >&2
+    exit 1
+  }
+done
+
+if [[ "${OMOKAI_MODE:-core}" == multi ]]; then
+  for robot in robot1 robot2 robot3; do
+    for suffix in odom scan joint_states; do
+      topic="/${robot}/${suffix}"
+      [[ "${topics}" == *"${topic}"* ]] || {
+        echo "Missing required topic: ${topic}" >&2
+        exit 1
+      }
+    done
+    timeout 4 ros2 topic echo \
+      "/${robot}/odom" --once >/dev/null 2>&1
+  done
+  exit 0
+fi
+
+for topic in /odom /scan; do
   [[ "${topics}" == *"${topic}"* ]] || {
     echo "Missing required topic: ${topic}" >&2
     exit 1

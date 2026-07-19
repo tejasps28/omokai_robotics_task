@@ -6,15 +6,46 @@ export HOST_UID="${HOST_UID:-$(id -u)}"
 export HOST_GID="${HOST_GID:-$(id -g)}"
 
 gui=false
-if [[ "${1:-}" == "--gui" ]]; then
-  gui=true
-elif (( $# > 0 )); then
-  echo "Usage: $0 [--gui]" >&2
-  exit 2
-fi
+mode=core
+while (( $# > 0 )); do
+  case "$1" in
+    --gui)
+      gui=true
+      ;;
+    --multi|--multi-agent)
+      [[ "${mode}" == core ]] || {
+        echo "Only one multi-agent mode flag may be supplied." >&2
+        exit 2
+      }
+      mode=multi
+      ;;
+    --help|-h)
+      echo "Usage: $0 [--gui] [--multi-agent]"
+      exit 0
+      ;;
+    *)
+      echo "Usage: $0 [--gui] [--multi-agent]" >&2
+      exit 2
+      ;;
+  esac
+  shift
+done
 
-mkdir -p "${root}/runtime/artifacts" "${root}/runtime/ros_logs"
+mkdir -p \
+  "${root}/runtime/artifacts" \
+  "${root}/runtime/ros_logs"
 compose=(docker compose --project-directory "${root}" -f "${root}/compose.yaml")
+
+export OMOKAI_MODE="${mode}"
+if [[ "${mode}" == multi ]]; then
+  export OMOKAI_LAUNCH_FILE=multi_robot_simulation.launch.py
+  export OMOKAI_RVIZ=false
+  export OMOKAI_MAP_FILE=
+else
+  export OMOKAI_LAUNCH_FILE=core_navigation.launch.py
+  export OMOKAI_RVIZ=false
+  export OMOKAI_MAP_FILE=
+fi
 
 if [[ "${gui}" == true ]]; then
   [[ -n "${DISPLAY:-}" ]] || {
