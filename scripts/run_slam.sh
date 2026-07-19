@@ -9,7 +9,7 @@ compose=(
 )
 
 usage() {
-  echo "Usage: $0 start [--gui] | explore [options] | status [id] | cancel | save-map [name] | localize MAP [--gui] | verify [options] | stop"
+  echo "Usage: $0 start [--gui] | explore [options] | status [id] | cancel | save-map [name] | localize MAP [--gui] | verify [options] | check | stop"
 }
 
 command="${1:-}"
@@ -157,6 +157,35 @@ case "${command}" in
       "${arguments[@]}" || result=$?
     echo "Verification evidence: runtime/artifacts/${mission_id}/"
     exit "${result}"
+    ;;
+  check)
+    bash -n \
+      "${root}/scripts/start.sh" \
+      "${root}/scripts/run_slam.sh" \
+      "${root}/scripts/run_task1.sh" \
+      "${root}/scripts/stop.sh"
+    python3 -m py_compile \
+      "${root}/src/omokai_bringup/launch/core_navigation.launch.py" \
+      "${root}/src/omokai_bringup/launch/slam_navigation.launch.py" \
+      "${root}/src/omokai_bringup/launch/saved_map_navigation.launch.py"
+
+    export PYTHONDONTWRITEBYTECODE=1
+    export PYTHONPATH="${root}/src/omokai_interfaces:${root}/src/omokai_executor:${root}/src/omokai_mission:${root}/src/omokai_pipeline:${root}/src/omokai_exploration:${root}/src/omokai_bringup"
+    packages=(
+      omokai_interfaces
+      omokai_executor
+      omokai_mission
+      omokai_pipeline
+      omokai_exploration
+      omokai_bringup
+    )
+    for package in "${packages[@]}"; do
+      echo "Testing ${package} ..."
+      python3 -m unittest discover \
+        -s "${root}/src/${package}/test" \
+        -p 'test_*.py'
+    done
+    echo "All repository tests passed."
     ;;
   stop)
     "${root}/scripts/stop.sh"

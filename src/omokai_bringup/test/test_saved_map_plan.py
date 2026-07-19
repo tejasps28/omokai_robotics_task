@@ -1,3 +1,4 @@
+import math
 import unittest
 
 from omokai_bringup.saved_map_plan import (
@@ -42,6 +43,23 @@ class SavedMapPlanTest(unittest.TestCase):
     def test_rejects_empty_location_sequence(self) -> None:
         with self.assertRaises(ValueError):
             build_saved_map_plan('empty', locations=())
+
+    def test_rejects_duplicate_location_names(self) -> None:
+        duplicate = (
+            NamedLocation('same', 0.0, 0.0),
+            NamedLocation('same', 1.0, 1.0),
+        )
+
+        with self.assertRaises(ValueError):
+            build_saved_map_plan('duplicate', locations=duplicate)
+
+    def test_rejects_non_finite_location_pose(self) -> None:
+        with self.assertRaises(ValueError):
+            NamedLocation('invalid', math.nan, 0.0)
+
+    def test_rejects_invalid_speed(self) -> None:
+        with self.assertRaises(ValueError):
+            build_saved_map_plan('invalid-speed', speed_mps=0.0)
 
 
 if __name__ == '__main__':
