@@ -1,5 +1,11 @@
 """Deterministic multi-robot fleet planning and coordination."""
 
+from omokai_fleet.allocation import (
+    RouteAssignment,
+    RoutePoint,
+    partition_route,
+    regroup_goals,
+)
 from omokai_fleet.formation import (
     PLANNED_MINIMUM_DISTANCE_M,
     FormationOffset,
@@ -28,6 +34,8 @@ __all__ = [
     'FormationOffset',
     'GoalSeparation',
     'Pose2D',
+    'RouteAssignment',
+    'RoutePoint',
     'Robot',
     'RobotGoal',
     'RobotId',
@@ -36,6 +44,8 @@ __all__ = [
     'formation_goals',
     'formation_offsets',
     'goal_separations',
+    'partition_route',
+    'regroup_goals',
     'transform_offset',
     'validate_goal_separation',
 ]
