@@ -6,6 +6,7 @@
 | [TurtleBot3](https://github.com/ROBOTIS-GIT/turtlebot3) | `turtlebot3_navigation2` 2.3.6 | Apache-2.0 | Navigation parameters and map |
 | [TurtleBot3 simulations](https://github.com/ROBOTIS-GIT/turtlebot3_simulations) | 2.3.7 | Apache-2.0 | Robot models, spawn launch, and simulation launch reference |
 | [Navigation2](https://github.com/ros-navigation/navigation2) | 1.3.12 | Apache-2.0 | Localization, planning, control, behavior trees, and navigation action |
+| [SLAM Toolbox](https://github.com/SteveMacenski/slam_toolbox) | 2.8.5 | BSD-3-Clause | Online 2D mapping and `map -> odom` localization transform |
 | [ros_gz](https://github.com/gazebosim/ros_gz) | 1.0.22 | Apache-2.0 | ROS 2 and Gazebo integration |
 | [Gazebo Harmonic](https://gazebosim.org/docs/harmonic/) | Harmonic packages supplied through ROS Jazzy | Apache-2.0 | Simulator |
 | [Cyclone DDS](https://github.com/eclipse-cyclonedds/cyclonedds) | ROS Jazzy binary package | EPL-2.0 or BSD-3-Clause | Docker-friendly ROS middleware |

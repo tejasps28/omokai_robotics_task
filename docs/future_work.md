@@ -6,17 +6,18 @@ control. The same boundary applies to the additional challenges.
 
 ## SLAM and autonomous navigation
 
-SLAM Toolbox would consume LiDAR, odometry, and transforms to build and save a
-2D map and pose graph. Mapping and localization would be separate operating
-modes:
+This challenge is implemented. SLAM Toolbox consumes LiDAR, odometry, and
+transforms to build and save a 2D occupancy map. Mapping and localization are
+separate operating modes:
 
 - mapping mode builds the map and selects safe frontiers through a
   deterministic exploration node;
 - navigation mode reloads the map, localizes with Nav2, and accepts named
-  destinations or locally validated exploration regions.
+  destinations.
 
-Acceptance would include map creation from an unknown world, serialization,
-reload, loop-closure behavior, and obstacle-aware navigation to named goals.
+The acceptance workflow covers map creation from an unknown world,
+serialization, reload, and obstacle-aware navigation to two named goals. See
+[SLAM and autonomous navigation](slam.md).
 
 ## Vision target detection and following
 

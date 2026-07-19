@@ -1,4 +1,4 @@
-# Natural-Language Ground Robot Task 1
+# Natural-Language Ground Robot and Autonomous SLAM
 
 This project turns a natural-language instruction into a bounded robot mission
 and executes it on a simulated TurtleBot3:
@@ -11,6 +11,10 @@ The language model proposes intent only. It cannot publish ROS messages or
 choose arbitrary coordinates. A local validator accepts only known routes and
 safe parameters, then a deterministic executor sends the corresponding poses
 to Nav2.
+
+The repository also includes the SLAM challenge: the same robot can build a
+map from live LiDAR data, autonomously explore deterministic frontiers, save
+the map, restart with AMCL localization, and navigate named locations.
 
 ## Requirements
 
@@ -125,12 +129,31 @@ The source is split by responsibility:
 - `omokai_mission`: LLM adapters, validation, route catalog, and compiler;
 - `omokai_executor`: deterministic state machine and Nav2 adapter;
 - `omokai_pipeline`: application orchestration and operator CLI;
-- `omokai_bringup`: Gazebo, AMCL, Nav2, and live mission runner.
+- `omokai_exploration`: deterministic frontier selection and exploration
+  lifecycle;
+- `omokai_bringup`: Gazebo, SLAM Toolbox, AMCL, Nav2, and live runners.
+
+## SLAM challenge
+
+The complete headless workflow is:
+
+```bash
+./scripts/run_slam.sh start
+./scripts/run_slam.sh explore --exploration-id slam-demo
+./scripts/run_slam.sh save-map slam-demo
+./scripts/run_slam.sh localize slam-demo
+./scripts/run_slam.sh verify --mission-id saved-map-demo
+```
+
+Add `--gui` to the `start` or `localize` command to open Gazebo and RViz.
+See the [SLAM demonstration guide](docs/slam.md) for status, cancellation,
+expected output, architecture, and limitations.
 
 ## Documentation
 
 - [Architecture](docs/architecture.md)
 - [Mission format](docs/mission_format.md)
+- [SLAM and autonomous navigation](docs/slam.md)
 - [Sources and licenses](docs/sources.md)
 - [Approach to the additional challenges](docs/future_work.md)
 
