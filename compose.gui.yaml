@@ -25,3 +25,4 @@ services:
       - ${OMOKAI_LAUNCH_FILE:-core_navigation.launch.py}
       - gui:=true
       - rviz:=${OMOKAI_RVIZ:-false}
+      - map:=${OMOKAI_MAP_FILE:-unused}

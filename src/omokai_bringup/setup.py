@@ -25,6 +25,7 @@ setup(
         'console_scripts': [
             'foundation_smoke_test = omokai_bringup.foundation_smoke_test:main',
             'initial_pose_publisher = omokai_bringup.initial_pose_publisher:main',
+            'saved_map_verifier = omokai_bringup.saved_map_runner:main',
             'task1_mission_runner = omokai_bringup.task1_mission_runner:main',
         ],
     },

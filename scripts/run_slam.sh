@@ -9,7 +9,7 @@ compose=(
 )
 
 usage() {
-  echo "Usage: $0 start [--gui] | explore [options] | status [id] | cancel | save-map [name] | stop"
+  echo "Usage: $0 start [--gui] | explore [options] | status [id] | cancel | save-map [name] | localize MAP [--gui] | verify [options] | stop"
 }
 
 command="${1:-}"
@@ -117,6 +117,46 @@ case "${command}" in
     fi
 
     echo "Saved map: runtime/maps/${map_name}.yaml"
+    ;;
+  localize)
+    map_name="${2:-}"
+    [[ -n "${map_name}" ]] || {
+      echo "Usage: $0 localize MAP [--gui]" >&2
+      exit 2
+    }
+    shift 2
+    "${root}/scripts/start.sh" --map "${map_name}" "$@"
+    ;;
+  verify)
+    shift
+    amcl_state="$(
+      "${compose[@]}" exec -T robot /usr/local/bin/omokai-entrypoint \
+        ros2 lifecycle get /amcl 2>/dev/null || true
+    )"
+    [[ "${amcl_state}" == active* ]] || {
+      echo "Start saved-map localization first with ./scripts/run_slam.sh localize MAP." >&2
+      exit 1
+    }
+    mission_id=""
+    arguments=("$@")
+    for ((index = 0; index < ${#arguments[@]}; index++)); do
+      if [[ "${arguments[index]}" == "--mission-id" ]]; then
+        mission_id="${arguments[index + 1]:-}"
+        break
+      fi
+    done
+    if [[ -z "${mission_id}" ]]; then
+      mission_id="saved-map-$(date -u +%Y%m%dT%H%M%SZ)"
+      arguments=(--mission-id "${mission_id}" "${arguments[@]}")
+    fi
+    echo "Verification mission ID: ${mission_id}"
+    result=0
+    "${compose[@]}" exec -T robot /usr/local/bin/omokai-entrypoint \
+      ros2 run omokai_bringup saved_map_verifier \
+      --artifact-root /data/artifacts \
+      "${arguments[@]}" || result=$?
+    echo "Verification evidence: runtime/artifacts/${mission_id}/"
+    exit "${result}"
     ;;
   stop)
     "${root}/scripts/stop.sh"

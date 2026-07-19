@@ -7,20 +7,42 @@ export HOST_GID="${HOST_GID:-$(id -g)}"
 
 gui=false
 mode=core
+map_name=""
 while (( $# > 0 )); do
   case "$1" in
     --gui)
       gui=true
       ;;
     --slam)
+      [[ "${mode}" == core ]] || {
+        echo "--slam and --map are mutually exclusive." >&2
+        exit 2
+      }
       mode=slam
       ;;
+    --map)
+      [[ "${mode}" == core ]] || {
+        echo "--slam and --map are mutually exclusive." >&2
+        exit 2
+      }
+      shift
+      map_name="${1:-}"
+      [[ "${map_name}" =~ ^[A-Za-z0-9][A-Za-z0-9_-]*$ ]] || {
+        echo "Map name may contain only letters, numbers, underscores, and hyphens." >&2
+        exit 2
+      }
+      [[ -s "${root}/runtime/maps/${map_name}.yaml" ]] || {
+        echo "Saved map does not exist: runtime/maps/${map_name}.yaml" >&2
+        exit 1
+      }
+      mode=localization
+      ;;
     --help|-h)
-      echo "Usage: $0 [--gui] [--slam]"
+      echo "Usage: $0 [--gui] [--slam | --map MAP_NAME]"
       exit 0
       ;;
     *)
-      echo "Usage: $0 [--gui] [--slam]" >&2
+      echo "Usage: $0 [--gui] [--slam | --map MAP_NAME]" >&2
       exit 2
       ;;
   esac
@@ -37,9 +59,15 @@ export OMOKAI_MODE="${mode}"
 if [[ "${mode}" == slam ]]; then
   export OMOKAI_LAUNCH_FILE=slam_navigation.launch.py
   export OMOKAI_RVIZ="${gui}"
+  export OMOKAI_MAP_FILE=
+elif [[ "${mode}" == localization ]]; then
+  export OMOKAI_LAUNCH_FILE=saved_map_navigation.launch.py
+  export OMOKAI_RVIZ="${gui}"
+  export OMOKAI_MAP_FILE="/data/maps/${map_name}.yaml"
 else
   export OMOKAI_LAUNCH_FILE=core_navigation.launch.py
   export OMOKAI_RVIZ=false
+  export OMOKAI_MAP_FILE=
 fi
 
 if [[ "${gui}" == true ]]; then
