@@ -57,9 +57,11 @@ class FleetNav2Adapter:
         *,
         adapters: dict[RobotId, Any] | None = None,
         safety_check: Callable[[], str | None] | None = None,
+        cancel_check: Callable[[], bool] | None = None,
     ) -> None:
         self._node = node
         self._safety_check = safety_check
+        self._cancel_check = cancel_check
         self._adapters: dict[RobotId, Any] = adapters or {}
         if not self._adapters:
             for robot_id in ROBOT_IDS:
@@ -133,6 +135,8 @@ class FleetNav2Adapter:
                 reason = self._safety_check()
                 if reason:
                     self._begin_safety_stop(reason)
+            if self._cancel_check is not None and self._cancel_check():
+                self._begin_operator_cancel()
 
         if self._pending:
             self._begin_timeout()
@@ -347,6 +351,14 @@ class FleetNav2Adapter:
                 if robot_id is self._root_failure
                 else f'cancelled after separation violation: {reason}'
             )
+            self._adapters[robot_id].cancel(self._tokens[robot_id])
+
+    def _begin_operator_cancel(self) -> None:
+        if not self._pending or self._cancel_status:
+            return
+        for robot_id in tuple(self._pending):
+            self._cancel_status[robot_id] = NavigationStatus.CANCELLED
+            self._cancel_reasons[robot_id] = 'operator cancellation confirmed'
             self._adapters[robot_id].cancel(self._tokens[robot_id])
 
     def _matches_pending(self, robot_id: RobotId, token: str) -> bool:

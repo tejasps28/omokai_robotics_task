@@ -4,7 +4,8 @@ from __future__ import annotations
 
 from dataclasses import dataclass
 from math import cos, sin
-from typing import Protocol
+from time import monotonic
+from typing import Callable, Protocol
 
 from omokai_fleet.allocation import (
     RoutePoint,
@@ -145,12 +146,15 @@ def build_squad_mission(
 def execute_squad_mission(
     navigation: FleetNavigation,
     mission: SquadMission,
+    *,
+    clock: Callable[[], float] = monotonic,
 ) -> SquadLifecycle:
     """Execute all enabled phases and return the terminal/current lifecycle."""
     if not isinstance(mission, SquadMission):
         raise ValueError('mission must be a SquadMission')
     lifecycle = SquadLifecycle()
     lifecycle.accept(mission.plan)
+    mission_deadline = clock() + mission.plan.mission_timeout_sec
 
     if not _execute_phase(
         navigation,
@@ -158,6 +162,8 @@ def execute_squad_mission(
         SquadState.FORMING,
         (mission.forming,),
         mission.plan,
+        mission_deadline,
+        clock,
     ):
         return lifecycle
     if not _execute_phase(
@@ -166,6 +172,8 @@ def execute_squad_mission(
         SquadState.FORMATION_MOVING,
         mission.formation_movement,
         mission.plan,
+        mission_deadline,
+        clock,
     ):
         return lifecycle
 
@@ -177,6 +185,8 @@ def execute_squad_mission(
             SquadState.EXECUTING_SPLIT,
             mission.split_execution,
             mission.plan,
+            mission_deadline,
+            clock,
         ):
             return lifecycle
 
@@ -187,6 +197,8 @@ def execute_squad_mission(
             SquadState.REGROUPING,
             (mission.regrouping,),
             mission.plan,
+            mission_deadline,
+            clock,
         ):
             return lifecycle
 
@@ -200,19 +212,33 @@ def _execute_phase(
     phase: SquadState,
     batches: tuple[tuple[RobotGoal, ...], ...],
     plan: SquadPlan,
+    mission_deadline: float,
+    clock: Callable[[], float],
 ) -> bool:
     lifecycle.start_phase(phase)
     for index, goals in enumerate(batches):
+        remaining_sec = mission_deadline - clock()
+        if remaining_sec <= 0:
+            _finish_undispatched_timeout(lifecycle)
+            return False
         result = navigation.execute(
             goals,
             speed_mps=plan.speed_mps,
-            timeout_sec=plan.goal_timeout_sec,
+            timeout_sec=min(plan.goal_timeout_sec, remaining_sec),
         )
         if not result.succeeded or index == len(batches) - 1:
             apply_navigation_batch(lifecycle, result)
         if not result.succeeded:
             return False
     return True
+
+
+def _finish_undispatched_timeout(lifecycle: SquadLifecycle) -> None:
+    reason = 'squad mission timed out before the next batch was dispatched'
+    lifecycle.request_timeout(reason)
+    for robot_id in ROBOT_IDS:
+        lifecycle.record_cancelled(robot_id, reason)
+    lifecycle.finish_cancellation()
 
 
 def _split_batches(

@@ -196,6 +196,25 @@ class MissionExecutionTest(unittest.TestCase):
         self.assertEqual(SquadState.SUCCEEDED, lifecycle.state)
         self.assertEqual(2, len(navigation.calls))
 
+    def test_mission_deadline_stops_before_later_batch_dispatch(self) -> None:
+        mission = build_squad_mission(
+            plan(),
+            formation_references=REFERENCES,
+            route_points=ROUTE,
+            home=HOME,
+        )
+        navigation = FakeNavigation()
+        times = iter((0.0, 0.0, 601.0))
+
+        lifecycle = execute_squad_mission(
+            navigation,
+            mission,
+            clock=lambda: next(times),
+        )
+
+        self.assertEqual(SquadState.TIMED_OUT, lifecycle.state)
+        self.assertEqual(1, len(navigation.calls))
+
 
 if __name__ == '__main__':
     unittest.main()

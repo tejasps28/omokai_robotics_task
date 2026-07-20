@@ -20,4 +20,9 @@ setup(
     maintainer_email='tejasps28@gmail.com',
     description='Deterministic models and coordination for a robot fleet.',
     license='Apache-2.0',
+    entry_points={
+        'console_scripts': [
+            'omokai-squad = omokai_fleet.operator_cli:main',
+        ],
+    },
 )
