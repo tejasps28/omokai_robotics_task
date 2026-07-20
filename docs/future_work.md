@@ -32,8 +32,9 @@ and emergency stop would remain local safety constraints.
 
 ## Multi-robot coordination
 
-Three namespaced robots would run independent Nav2 stacks. A centralized
-coordinator would convert validated squad intent into per-robot plans:
+This challenge is implemented. Three namespaced robots run independent Nav2
+stacks. A centralized coordinator converts validated squad intent into
+per-robot plans:
 
 - split a route by path length;
 - maintain line or wedge offsets in the map frame;
@@ -42,8 +43,9 @@ coordinator would convert validated squad intent into per-robot plans:
 - regroup at explicit poses;
 - degrade safely if one robot fails.
 
-The model would choose only squad-level intent. Assignment, formation geometry,
-collision avoidance, and recovery would be deterministic and auditable.
+The model chooses only squad-level intent. Assignment, formation geometry,
+separation, cancellation, and recovery remain deterministic and auditable.
+See [multi-robot formation and coordination](multi_robot.md).
 
 ## Scaling to hardware
 

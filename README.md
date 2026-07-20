@@ -12,6 +12,10 @@ choose arbitrary coordinates. A local validator accepts only known routes and
 safe parameters, then a deterministic executor sends the corresponding poses
 to Nav2.
 
+The multi-robot challenge runs three namespaced TurtleBots with independent
+Nav2 stacks. They form a line or wedge, split a trusted route, monitor
+separation, and regroup.
+
 ## Requirements
 
 - Linux with Docker Engine and Docker Compose v2
@@ -125,12 +129,29 @@ The source is split by responsibility:
 - `omokai_mission`: LLM adapters, validation, route catalog, and compiler;
 - `omokai_executor`: deterministic state machine and Nav2 adapter;
 - `omokai_pipeline`: application orchestration and operator CLI;
-- `omokai_bringup`: Gazebo, AMCL, Nav2, and live mission runner.
+- `omokai_fleet`: squad validation, formation geometry, route allocation,
+  synchronized execution, and cancellation;
+- `omokai_bringup`: Gazebo, namespaced Nav2, and live fleet runners.
+
+## Multi-robot challenge
+
+Start three robots headlessly and run the credential-free demonstration:
+
+```bash
+./scripts/run_multi_robot.sh start
+./scripts/run_multi_robot.sh run --planner fake \
+  "You three split the inspection route in a wedge and regroup home."
+```
+
+Use `--gui` with `start` for Gazebo, or `--planner gemini` for hosted
+natural-language interpretation. See the
+[multi-robot demonstration guide](docs/multi_robot.md).
 
 ## Documentation
 
 - [Architecture](docs/architecture.md)
 - [Mission format](docs/mission_format.md)
+- [Multi-robot formation and coordination](docs/multi_robot.md)
 - [Sources and licenses](docs/sources.md)
 - [Approach to the additional challenges](docs/future_work.md)
 
