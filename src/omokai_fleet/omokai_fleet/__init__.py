@@ -41,17 +41,34 @@ from omokai_fleet.navigation import (
     NavigationStatus,
     apply_navigation_batch,
 )
+from omokai_fleet.mission import (
+    FleetNavigation,
+    SquadMission,
+    build_squad_mission,
+    execute_squad_mission,
+)
+from omokai_fleet.separation import (
+    EMERGENCY_MINIMUM_DISTANCE_M,
+    ObservedRobotPose,
+    ObservedSeparation,
+    emergency_separation_reason,
+    observed_separations,
+)
 
 __all__ = [
     'PLANNED_MINIMUM_DISTANCE_M',
     'ROBOT_IDS',
     'Formation',
+    'EMERGENCY_MINIMUM_DISTANCE_M',
     'FormationOffset',
+    'FleetNavigation',
     'GoalSeparation',
     'LifecycleError',
     'NavigationBatch',
     'NavigationResult',
     'NavigationStatus',
+    'ObservedRobotPose',
+    'ObservedSeparation',
     'PhaseRecord',
     'Pose2D',
     'RouteAssignment',
@@ -63,6 +80,7 @@ __all__ = [
     'RobotPhaseResult',
     'SquadAction',
     'SquadLifecycle',
+    'SquadMission',
     'SquadPlan',
     'SquadSnapshot',
     'SquadState',
@@ -74,4 +92,8 @@ __all__ = [
     'transform_offset',
     'validate_goal_separation',
     'apply_navigation_batch',
+    'build_squad_mission',
+    'execute_squad_mission',
+    'emergency_separation_reason',
+    'observed_separations',
 ]

@@ -4,7 +4,7 @@ from __future__ import annotations
 
 from math import isfinite
 from time import monotonic
-from typing import Any
+from typing import Any, Callable
 
 import rclpy
 from nav2_msgs.msg import SpeedLimit
@@ -56,8 +56,10 @@ class FleetNav2Adapter:
         node: Any,
         *,
         adapters: dict[RobotId, Any] | None = None,
+        safety_check: Callable[[], str | None] | None = None,
     ) -> None:
         self._node = node
+        self._safety_check = safety_check
         self._adapters: dict[RobotId, Any] = adapters or {}
         if not self._adapters:
             for robot_id in ROBOT_IDS:
@@ -82,6 +84,7 @@ class FleetNav2Adapter:
         self._pending: set[RobotId] = set()
         self._results: dict[RobotId, NavigationResult] = {}
         self._cancel_status: dict[RobotId, NavigationStatus] = {}
+        self._cancel_reasons: dict[RobotId, str] = {}
         self._root_failure: RobotId | None = None
 
     def unavailable_servers(self) -> tuple[RobotId, ...]:
@@ -99,7 +102,11 @@ class FleetNav2Adapter:
         timeout_sec: float,
     ) -> NavigationBatch:
         self._validate_request(goals, speed_mps, timeout_sec)
+        server_deadline = monotonic() + 10.0
         unavailable = self.unavailable_servers()
+        while unavailable and monotonic() < server_deadline:
+            rclpy.spin_once(self._node, timeout_sec=0.05)
+            unavailable = self.unavailable_servers()
         if unavailable:
             names = ', '.join(item.value for item in unavailable)
             raise Nav2ServerUnavailable(
@@ -122,6 +129,10 @@ class FleetNav2Adapter:
         deadline = monotonic() + timeout_sec
         while self._pending and monotonic() < deadline:
             rclpy.spin_once(self._node, timeout_sec=0.05)
+            if self._safety_check is not None:
+                reason = self._safety_check()
+                if reason:
+                    self._begin_safety_stop(reason)
 
         if self._pending:
             self._begin_timeout()
@@ -170,6 +181,7 @@ class FleetNav2Adapter:
         self._pending = set()
         self._results = {}
         self._cancel_status = {}
+        self._cancel_reasons = {}
         self._root_failure = None
 
     def _execution_goal(self, goal: RobotGoal) -> ExecutionGoal:
@@ -241,11 +253,10 @@ class FleetNav2Adapter:
             NavigationStatus.CANCELLED,
         )
         reason = (
-            'goal timed out and cancellation was confirmed'
-            if status is NavigationStatus.TIMED_OUT
-            else f'cancelled after {self._root_failure.value} failed'
-            if self._root_failure
-            else 'goal cancellation confirmed'
+            self._cancel_reasons.get(
+                robot_id,
+                'goal cancellation confirmed',
+            )
         )
         self._results[robot_id] = NavigationResult(
             robot_id,
@@ -304,12 +315,38 @@ class FleetNav2Adapter:
                 if robot_id is self._root_failure
                 else NavigationStatus.CANCELLED
             )
+            self._cancel_reasons[robot_id] = (
+                'goal timed out and cancellation was confirmed'
+                if robot_id is self._root_failure
+                else f'cancelled after {self._root_failure.value} timed out'
+            )
             self._adapters[robot_id].cancel(self._tokens[robot_id])
 
     def _cancel_pending(self, reason: str) -> None:
-        del reason
         for robot_id in tuple(self._pending):
             self._cancel_status[robot_id] = NavigationStatus.CANCELLED
+            self._cancel_reasons[robot_id] = reason
+            self._adapters[robot_id].cancel(self._tokens[robot_id])
+
+    def _begin_safety_stop(self, reason: str) -> None:
+        if not self._pending or self._cancel_status:
+            return
+        self._root_failure = next(
+            robot_id
+            for robot_id in ROBOT_IDS
+            if robot_id in self._pending
+        )
+        for robot_id in tuple(self._pending):
+            self._cancel_status[robot_id] = (
+                NavigationStatus.FAILED
+                if robot_id is self._root_failure
+                else NavigationStatus.CANCELLED
+            )
+            self._cancel_reasons[robot_id] = (
+                reason
+                if robot_id is self._root_failure
+                else f'cancelled after separation violation: {reason}'
+            )
             self._adapters[robot_id].cancel(self._tokens[robot_id])
 
     def _matches_pending(self, robot_id: RobotId, token: str) -> bool:

@@ -18,6 +18,7 @@ PARAMETERS = {
     'bt_navigator': {
         'ros__parameters': {
             'global_frame': 'map',
+            'local_frame': 'odom',
             'robot_base_frame': 'base_link',
             'odom_topic': '/odom',
         }
@@ -77,6 +78,10 @@ class MultiRobotNavParametersTest(unittest.TestCase):
         self.assertEqual(
             'robot3/base_link',
             result['bt_navigator']['ros__parameters']['robot_base_frame'],
+        )
+        self.assertEqual(
+            'robot3/odom',
+            result['bt_navigator']['ros__parameters']['local_frame'],
         )
         self.assertEqual(
             '/robot3/odom',

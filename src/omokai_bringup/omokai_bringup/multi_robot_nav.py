@@ -13,6 +13,7 @@ FRAME_KEYS = {
     'base_frame_id',
     'global_frame',
     'global_frame_id',
+    'local_frame',
     'odom_frame_id',
     'robot_base_frame',
 }
