@@ -12,6 +12,9 @@
   <exec_depend>nav2_msgs</exec_depend>
   <exec_depend>geometry_msgs</exec_depend>
   <exec_depend>omokai_executor</exec_depend>
+  <exec_depend>omokai_interfaces</exec_depend>
+  <exec_depend>omokai_mission</exec_depend>
+  <exec_depend>python3-jsonschema</exec_depend>
   <exec_depend>rclpy</exec_depend>
 
   <test_depend>python3-pytest</test_depend>

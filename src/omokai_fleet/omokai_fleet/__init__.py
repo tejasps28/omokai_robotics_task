@@ -41,6 +41,15 @@ from omokai_fleet.navigation import (
     NavigationStatus,
     apply_navigation_batch,
 )
+from omokai_fleet.planner import (
+    SQUAD_PLAN_SCHEMA,
+    FakeSquadPlanner,
+    SquadPlanner,
+    SquadPlannerError,
+    SquadValidationIssue,
+    SquadValidationResult,
+    validate_squad_proposal,
+)
 from omokai_fleet.mission import (
     FleetNavigation,
     SquadMission,
@@ -61,6 +70,7 @@ __all__ = [
     'Formation',
     'EMERGENCY_MINIMUM_DISTANCE_M',
     'FormationOffset',
+    'FakeSquadPlanner',
     'FleetNavigation',
     'GoalSeparation',
     'LifecycleError',
@@ -82,6 +92,11 @@ __all__ = [
     'SquadLifecycle',
     'SquadMission',
     'SquadPlan',
+    'SquadPlanner',
+    'SquadPlannerError',
+    'SquadValidationIssue',
+    'SquadValidationResult',
+    'SQUAD_PLAN_SCHEMA',
     'SquadSnapshot',
     'SquadState',
     'formation_goals',
@@ -96,4 +111,5 @@ __all__ = [
     'execute_squad_mission',
     'emergency_separation_reason',
     'observed_separations',
+    'validate_squad_proposal',
 ]
