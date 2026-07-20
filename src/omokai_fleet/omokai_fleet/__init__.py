@@ -35,6 +35,12 @@ from omokai_fleet.model import (
     SquadAction,
     SquadPlan,
 )
+from omokai_fleet.navigation import (
+    NavigationBatch,
+    NavigationResult,
+    NavigationStatus,
+    apply_navigation_batch,
+)
 
 __all__ = [
     'PLANNED_MINIMUM_DISTANCE_M',
@@ -43,6 +49,9 @@ __all__ = [
     'FormationOffset',
     'GoalSeparation',
     'LifecycleError',
+    'NavigationBatch',
+    'NavigationResult',
+    'NavigationStatus',
     'PhaseRecord',
     'Pose2D',
     'RouteAssignment',
@@ -64,4 +73,5 @@ __all__ = [
     'regroup_goals',
     'transform_offset',
     'validate_goal_separation',
+    'apply_navigation_batch',
 ]

@@ -218,6 +218,18 @@ class LifecycleFailureTest(unittest.TestCase):
         self.assertEqual(SquadState.TIMED_OUT, snapshot.state)
         self.assertEqual('squad mission timed out', snapshot.reason)
 
+    def test_unconfirmed_operator_cancellation_finishes_failed(self) -> None:
+        self.lifecycle.request_cancel()
+        self.lifecycle.record_cancellation_failed(
+            RobotId.ROBOT1,
+            'Nav2 rejected cancellation',
+        )
+        self.lifecycle.record_cancelled(RobotId.ROBOT2)
+        self.lifecycle.record_cancelled(RobotId.ROBOT3)
+        self.lifecycle.finish_cancellation()
+
+        self.assertEqual(SquadState.FAILED, self.lifecycle.state)
+
     def test_cancel_before_dispatch_is_immediately_terminal(self) -> None:
         lifecycle = SquadLifecycle()
         lifecycle.accept(plan())

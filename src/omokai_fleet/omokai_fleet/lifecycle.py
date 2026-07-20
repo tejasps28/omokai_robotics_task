@@ -231,6 +231,19 @@ class SquadLifecycle:
         self._require_state(SquadState.CANCELLING)
         self._replace_active(robot_id, RobotOutcome.CANCELLED, reason)
 
+    def record_cancellation_failed(
+        self,
+        robot_id: RobotId,
+        reason: str,
+    ) -> None:
+        self._require_state(SquadState.CANCELLING)
+        if not isinstance(reason, str) or not reason.strip():
+            raise ValueError('cancellation failure reason must not be blank')
+        self._replace_active(robot_id, RobotOutcome.FAILED, reason)
+        if self._terminal_target is SquadState.CANCELLED:
+            self._terminal_target = SquadState.FAILED
+            self._reason = reason
+
     def finish_cancellation(self) -> None:
         self._require_state(SquadState.CANCELLING)
         if any(
