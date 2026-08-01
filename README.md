@@ -178,3 +178,11 @@ and return home” is interpreted and executed successfully.
 - Local validation accepts only safe schema-compliant missions, then the
   deterministic compiler converts the selected catalog route into ordered Nav2
   goals for execution.
+
+## Video Submission of the SLAM Challenge
+
+SLAM challenge video: `VIDEO_LINK_PENDING`
+
+The recording will show online map construction from an empty occupancy grid,
+autonomous frontier exploration, map persistence, AMCL localization against
+the saved map, and navigation to the documented named locations.
