@@ -8,7 +8,7 @@ from pathlib import Path
 from omokai_fleet.operator_cli import main
 
 
-PROMPT = 'You three split the inspection route in a wedge and regroup home.'
+PROMPT = 'Form a wedge at the dock, inspect separate rooms, and regroup home.'
 
 
 class OperatorCliTest(unittest.TestCase):

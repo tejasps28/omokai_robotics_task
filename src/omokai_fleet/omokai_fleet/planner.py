@@ -10,7 +10,12 @@ from typing import Any, Mapping, Protocol, runtime_checkable
 from jsonschema import Draft7Validator
 from omokai_interfaces import MissionProposal, PlanRequest
 
-from omokai_fleet.model import Formation, SquadAction, SquadPlan
+from omokai_fleet.model import (
+    Formation,
+    SquadAction,
+    SquadPlan,
+    maximum_squad_speed_mps,
+)
 
 
 SQUAD_SCHEMA_VERSION = '1.0'
@@ -40,12 +45,12 @@ SQUAD_PLAN_SCHEMA: Mapping[str, Any] = {
         'spacing_m': {
             'type': 'number',
             'minimum': 0.6,
-            'maximum': 1.2,
+            'maximum': 0.6,
         },
         'speed_mps': {
             'type': 'number',
             'minimum': 0.05,
-            'maximum': 0.18,
+            'maximum': maximum_squad_speed_mps(),
         },
         'split_route': {'type': 'boolean'},
         'regroup': {'type': 'boolean'},
@@ -117,7 +122,10 @@ class FakeSquadPlanner:
             'spacing_m': self._spacing_m,
             'speed_mps': self._speed_mps,
             'split_route': bool(
-                re.search(r'\b(?:split|divide|share|assign)\b', prompt)
+                re.search(
+                    r'\b(?:split|divide|share|assign|separate|different)\b',
+                    prompt,
+                )
             ),
             'regroup': bool(
                 re.search(r'\b(?:regroup|rendezvous|return|home)\b', prompt)

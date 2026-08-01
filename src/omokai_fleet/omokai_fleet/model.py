@@ -5,6 +5,16 @@ from __future__ import annotations
 from dataclasses import dataclass
 from enum import Enum
 from math import isfinite
+import os
+
+
+def maximum_squad_speed_mps() -> float:
+    """Return the bounded simulation override, preserving the safe default."""
+    try:
+        value = float(os.environ.get('OMOKAI_DEMO_MAX_SPEED_MPS', '0.18'))
+    except ValueError:
+        return 0.18
+    return value if isfinite(value) and 0.18 <= value <= 0.40 else 0.18
 
 
 def _is_finite_number(value: object) -> bool:
@@ -129,9 +139,12 @@ class SquadPlan:
             raise ValueError('spacing_m must be between 0.60 and 1.20')
         if (
             not _is_finite_number(self.speed_mps)
-            or not 0.05 <= self.speed_mps <= 0.18
+            or not 0.05 <= self.speed_mps <= maximum_squad_speed_mps()
         ):
-            raise ValueError('speed_mps must be between 0.05 and 0.18')
+            raise ValueError(
+                'speed_mps must be between 0.05 and '
+                f'{maximum_squad_speed_mps():.2f}'
+            )
         if not isinstance(self.split_route, bool):
             raise ValueError('split_route must be a boolean')
         if not isinstance(self.regroup, bool):

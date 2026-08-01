@@ -25,6 +25,11 @@ PRIMARY_FAILURES = {
 }
 
 
+def is_hold_goal_id(goal_id: object) -> bool:
+    """Return whether a goal represents a stationary scheduling reservation."""
+    return isinstance(goal_id, str) and goal_id.endswith('/hold')
+
+
 @dataclass(frozen=True)
 class NavigationResult:
     robot_id: RobotId

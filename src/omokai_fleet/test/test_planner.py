@@ -41,6 +41,18 @@ class FakeSquadPlannerTest(unittest.TestCase):
         self.assertFalse(result.plan.split_route)
         self.assertFalse(result.plan.regroup)
 
+    def test_different_rooms_requests_split_assignment(self) -> None:
+        proposal = FakeSquadPlanner().propose(
+            PlanRequest(
+                'request-rooms',
+                'Form a wedge and send each robot to a different room.',
+            )
+        )
+        result = validate_squad_proposal(proposal, plan_id='plan-rooms')
+
+        self.assertTrue(result.accepted)
+        self.assertTrue(result.plan.split_route)
+
     def test_rejects_prompt_without_supported_formation(self) -> None:
         with self.assertRaises(SquadPlannerError):
             FakeSquadPlanner().propose(
@@ -84,6 +96,15 @@ class SquadValidationTest(unittest.TestCase):
 
         self.assertFalse(result.accepted)
         self.assertEqual(2, len(result.issues))
+
+    def test_rejects_unverified_live_spacing(self) -> None:
+        result = validate_squad_proposal(
+            self.proposal(spacing_m=0.8),
+            plan_id='plan-spacing',
+        )
+
+        self.assertFalse(result.accepted)
+        self.assertIn('maximum of 0.6', result.issues[0].message)
 
     def test_rejects_unknown_route_formation_and_rendezvous(self) -> None:
         result = validate_squad_proposal(

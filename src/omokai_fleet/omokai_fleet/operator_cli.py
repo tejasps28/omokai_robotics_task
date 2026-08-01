@@ -22,7 +22,7 @@ from omokai_fleet.scenario import build_demo_mission
 
 
 DEFAULT_PROMPT = (
-    'You three split the inspection route in a wedge and regroup home.'
+    'Form a wedge at the dock, inspect separate rooms, and regroup home.'
 )
 MISSION_ID_PATTERN = re.compile(r'^[A-Za-z0-9][A-Za-z0-9_.-]{0,63}$')
 

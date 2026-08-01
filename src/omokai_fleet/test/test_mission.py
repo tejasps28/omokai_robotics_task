@@ -15,6 +15,7 @@ from omokai_fleet import (
     build_squad_mission,
     execute_squad_mission,
 )
+from omokai_fleet.split_execution import SplitExecutionResult, SplitRobotResult
 
 
 def plan(**overrides) -> SquadPlan:
@@ -78,6 +79,64 @@ class FakeNavigation:
             tuple(
                 NavigationResult(robot_id, NavigationStatus.SUCCEEDED)
                 for robot_id in RobotId
+            )
+        )
+
+    def execute_formation(
+        self,
+        batches,
+        *,
+        formation,
+        spacing_m,
+        speed_mps,
+        timeout_sec,
+    ):
+        self.calls.append(
+            (batches, formation, spacing_m, speed_mps, timeout_sec)
+        )
+        call_number = len(self.calls)
+        if call_number == self.fail_call:
+            return NavigationBatch(
+                (
+                    NavigationResult(
+                        RobotId.ROBOT1,
+                        NavigationStatus.FAILED,
+                        'injected leader failure',
+                    ),
+                    NavigationResult(
+                        RobotId.ROBOT2,
+                        NavigationStatus.CANCELLED,
+                        'formation tracking stopped',
+                    ),
+                    NavigationResult(
+                        RobotId.ROBOT3,
+                        NavigationStatus.CANCELLED,
+                        'formation tracking stopped',
+                    ),
+                )
+            )
+        return NavigationBatch(
+            tuple(
+                NavigationResult(robot_id, NavigationStatus.SUCCEEDED)
+                for robot_id in RobotId
+            )
+        )
+
+
+class IsolatedFailureNavigation(FakeNavigation):
+    def execute_split(self, split_plan, *, speed_mps, timeout_sec):
+        self.calls.append((split_plan, speed_mps, timeout_sec))
+        return SplitExecutionResult(
+            (
+                SplitRobotResult(RobotId.ROBOT1, NavigationStatus.SUCCEEDED, 2),
+                SplitRobotResult(
+                    RobotId.ROBOT2,
+                    NavigationStatus.FAILED,
+                    0,
+                    1,
+                    'private route blocked',
+                ),
+                SplitRobotResult(RobotId.ROBOT3, NavigationStatus.SUCCEEDED, 1),
             )
         )
 
@@ -181,6 +240,44 @@ class MissionExecutionTest(unittest.TestCase):
 
         self.assertEqual(SquadState.FAILED, lifecycle.state)
         self.assertEqual(2, len(navigation.calls))
+
+    def test_records_partial_split_and_does_not_attempt_regroup(self) -> None:
+        mission = build_squad_mission(
+            plan(),
+            formation_references=REFERENCES,
+            route_points=ROUTE,
+            home=HOME,
+        )
+        navigation = IsolatedFailureNavigation()
+
+        lifecycle = execute_squad_mission(navigation, mission)
+
+        self.assertEqual(SquadState.FAILED, lifecycle.state)
+        self.assertEqual(3, len(navigation.calls))
+        split = lifecycle.snapshot().history[-1]
+        self.assertEqual(
+            ('succeeded', 'failed', 'succeeded'),
+            tuple(result.outcome.value for result in split.results),
+        )
+        self.assertIn('private route blocked', lifecycle.snapshot().reason)
+
+    def test_formation_path_is_one_continuous_navigation_operation(self) -> None:
+        references = REFERENCES + (Pose2D(-0.5, 1.5, 0.0),)
+        mission = build_squad_mission(
+            plan(split_route=False, regroup=False),
+            formation_references=references,
+            route_points=ROUTE,
+            home=HOME,
+        )
+        navigation = FakeNavigation()
+
+        lifecycle = execute_squad_mission(navigation, mission)
+
+        self.assertEqual(SquadState.SUCCEEDED, lifecycle.state)
+        self.assertEqual(2, len(navigation.calls))
+        formation_call = navigation.calls[1]
+        self.assertEqual(2, len(formation_call[0]))
+        self.assertEqual(Formation.LINE, formation_call[1])
 
     def test_can_skip_split_and_regroup(self) -> None:
         mission = build_squad_mission(

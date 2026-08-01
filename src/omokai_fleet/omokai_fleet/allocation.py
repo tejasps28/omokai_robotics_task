@@ -3,6 +3,8 @@
 from __future__ import annotations
 
 from dataclasses import dataclass
+from itertools import permutations
+from math import hypot
 
 from omokai_fleet.formation import (
     formation_goals,
@@ -47,8 +49,9 @@ def partition_route(
     points: tuple[RoutePoint, ...],
     *,
     phase_id: str = 'split_route',
+    current_poses: dict[RobotId, Pose2D] | None = None,
 ) -> tuple[RouteAssignment, ...]:
-    """Split ordered points into balanced contiguous robot sections."""
+    """Split into contiguous sections and assign them by approach distance."""
     if not isinstance(points, tuple) or len(points) < len(ROBOT_IDS):
         raise ValueError(
             'points must be an immutable tuple with at least one point per robot'
@@ -61,13 +64,40 @@ def partition_route(
     point_ids = tuple(point.point_id for point in points)
     if len(set(point_ids)) != len(point_ids):
         raise ValueError('route point IDs must be unique')
+    if current_poses is not None and (
+        not isinstance(current_poses, dict)
+        or set(current_poses) != set(ROBOT_IDS)
+        or not all(isinstance(pose, Pose2D) for pose in current_poses.values())
+    ):
+        raise ValueError('current_poses must contain one Pose2D per robot')
 
     base_count, remainder = divmod(len(points), len(ROBOT_IDS))
-    assignments = []
+    sections = []
     start = 0
-    for index, robot_id in enumerate(ROBOT_IDS):
+    for index in range(len(ROBOT_IDS)):
         count = base_count + (1 if index < remainder else 0)
-        section = points[start : start + count]
+        sections.append(points[start : start + count])
+        start += count
+
+    section_order = tuple(range(len(ROBOT_IDS)))
+    if current_poses is not None:
+        section_order = min(
+            permutations(range(len(ROBOT_IDS))),
+            key=lambda order: (
+                sum(
+                    hypot(
+                        current_poses[robot_id].x - sections[section_index][0].pose.x,
+                        current_poses[robot_id].y - sections[section_index][0].pose.y,
+                    )
+                    for robot_id, section_index in zip(ROBOT_IDS, order)
+                ),
+                order,
+            ),
+        )
+
+    assignments = []
+    for robot_id, section_index in zip(ROBOT_IDS, section_order):
+        section = sections[section_index]
         goals = tuple(
             RobotGoal(
                 phase_id=phase_id,
@@ -78,7 +108,6 @@ def partition_route(
             for point in section
         )
         assignments.append(RouteAssignment(robot_id, goals))
-        start += count
 
     return tuple(assignments)
 

@@ -16,7 +16,7 @@ from omokai_fleet.formation import (
     formation_goals,
     validate_goal_separation,
 )
-from omokai_fleet.lifecycle import SquadLifecycle, SquadState
+from omokai_fleet.lifecycle import RobotOutcome, SquadLifecycle, SquadState
 from omokai_fleet.model import (
     ROBOT_IDS,
     Formation,
@@ -26,7 +26,15 @@ from omokai_fleet.model import (
 )
 from omokai_fleet.navigation import (
     NavigationBatch,
+    NavigationResult,
+    NavigationStatus,
     apply_navigation_batch,
+)
+from omokai_fleet.split_execution import (
+    SplitExecutionResult,
+    SplitExecutionPlan,
+    SplitReservationScheduler,
+    compile_split_execution,
 )
 
 
@@ -40,6 +48,27 @@ class FleetNavigation(Protocol):
     ) -> NavigationBatch:
         ...
 
+    def execute_formation(
+        self,
+        batches: tuple[tuple[RobotGoal, ...], ...],
+        *,
+        formation: Formation,
+        spacing_m: float,
+        speed_mps: float,
+        timeout_sec: float,
+    ) -> NavigationBatch:
+        """Move the leader path while followers track continuously."""
+        ...
+
+    def execute_split(
+        self,
+        plan: SplitExecutionPlan,
+        *,
+        speed_mps: float,
+        timeout_sec: float,
+    ) -> SplitExecutionResult:
+        ...
+
 
 @dataclass(frozen=True)
 class SquadMission:
@@ -48,6 +77,14 @@ class SquadMission:
     formation_movement: tuple[tuple[RobotGoal, ...], ...]
     split_execution: tuple[tuple[RobotGoal, ...], ...]
     regrouping: tuple[RobotGoal, ...]
+
+    @property
+    def split_plan(self) -> SplitExecutionPlan | None:
+        return (
+            compile_split_execution(self.split_execution)
+            if self.split_execution
+            else None
+        )
 
     def __post_init__(self) -> None:
         if not isinstance(self.plan, SquadPlan):
@@ -65,6 +102,7 @@ class SquadMission:
                 raise ValueError('split_execution is required by the plan')
             for batch in self.split_execution:
                 _validate_batch(batch)
+            compile_split_execution(self.split_execution)
         elif self.split_execution:
             raise ValueError('split_execution must be empty when disabled')
         if self.plan.regroup:
@@ -166,10 +204,9 @@ def execute_squad_mission(
         clock,
     ):
         return lifecycle
-    if not _execute_phase(
+    if not _execute_continuous_formation(
         navigation,
         lifecycle,
-        SquadState.FORMATION_MOVING,
         mission.formation_movement,
         mission.plan,
         mission_deadline,
@@ -179,11 +216,10 @@ def execute_squad_mission(
 
     if mission.plan.split_route:
         lifecycle.prepare_split()
-        if not _execute_phase(
+        if not _execute_split_phase(
             navigation,
             lifecycle,
-            SquadState.EXECUTING_SPLIT,
-            mission.split_execution,
+            mission.split_plan,
             mission.plan,
             mission_deadline,
             clock,
@@ -231,6 +267,123 @@ def _execute_phase(
         if not result.succeeded:
             return False
     return True
+
+
+def _execute_split_phase(
+    navigation: FleetNavigation,
+    lifecycle: SquadLifecycle,
+    split_plan: SplitExecutionPlan | None,
+    plan: SquadPlan,
+    mission_deadline: float,
+    clock: Callable[[], float],
+) -> bool:
+    if split_plan is None:
+        raise ValueError('split execution requires a compiled plan')
+    lifecycle.start_phase(SquadState.EXECUTING_SPLIT)
+    execute_split = getattr(navigation, 'execute_split', None)
+    if execute_split is not None:
+        remaining_sec = mission_deadline - clock()
+        if remaining_sec <= 0:
+            _finish_undispatched_timeout(lifecycle)
+            return False
+        result = execute_split(
+            split_plan,
+            speed_mps=plan.speed_mps,
+            timeout_sec=remaining_sec,
+        )
+        if result.succeeded:
+            for robot_id in ROBOT_IDS:
+                lifecycle.record_success(robot_id)
+            return True
+        outcomes = {}
+        for item in result.results:
+            if item.status is NavigationStatus.SUCCEEDED:
+                outcomes[item.robot_id] = (RobotOutcome.SUCCEEDED, '')
+            elif item.status is NavigationStatus.TIMED_OUT:
+                outcomes[item.robot_id] = (RobotOutcome.TIMED_OUT, item.reason)
+            elif item.status is NavigationStatus.CANCELLED:
+                outcomes[item.robot_id] = (RobotOutcome.CANCELLED, item.reason)
+            else:
+                outcomes[item.robot_id] = (RobotOutcome.FAILED, item.reason)
+        lifecycle.finish_partial_split(outcomes)
+        return False
+
+    # Compatibility path for transports that only implement synchronized
+    # batches. Production Nav2 uses execute_split above.
+    scheduler = SplitReservationScheduler(split_plan)
+    last_pose = {
+        item.robot_id: item.goals[0].pose
+        for item in split_plan.work
+    }
+    while not scheduler.complete:
+        ready = scheduler.ready_goals()
+        if not ready:
+            raise RuntimeError('split reservation scheduler deadlocked')
+        scheduler.claim(ready)
+        by_robot = {goal.robot_id: goal for goal in ready}
+        goals = tuple(
+            by_robot.get(robot_id)
+            or RobotGoal(
+                'executing_split',
+                f'executing_split/runtime/{robot_id.value}/hold',
+                robot_id,
+                last_pose[robot_id],
+            )
+            for robot_id in ROBOT_IDS
+        )
+        remaining_sec = mission_deadline - clock()
+        if remaining_sec <= 0:
+            _finish_undispatched_timeout(lifecycle)
+            return False
+        result = navigation.execute(
+            goals,
+            speed_mps=plan.speed_mps,
+            timeout_sec=min(plan.goal_timeout_sec, remaining_sec),
+        )
+        if not result.succeeded:
+            apply_navigation_batch(lifecycle, result)
+            return False
+        for goal in ready:
+            last_pose[goal.robot_id] = goal.pose
+            scheduler.release(goal.robot_id)
+    apply_navigation_batch(
+        lifecycle,
+        NavigationBatch(
+            tuple(
+                NavigationResult(robot_id, NavigationStatus.SUCCEEDED)
+                for robot_id in ROBOT_IDS
+            )
+        ),
+    )
+    return True
+
+
+def _execute_continuous_formation(
+    navigation: FleetNavigation,
+    lifecycle: SquadLifecycle,
+    batches: tuple[tuple[RobotGoal, ...], ...],
+    plan: SquadPlan,
+    mission_deadline: float,
+    clock: Callable[[], float],
+) -> bool:
+    """Run one leader path with continuous followers and one final barrier."""
+    lifecycle.start_phase(SquadState.FORMATION_MOVING)
+    remaining_sec = mission_deadline - clock()
+    if remaining_sec <= 0:
+        _finish_undispatched_timeout(lifecycle)
+        return False
+    result = navigation.execute_formation(
+        batches,
+        formation=plan.formation,
+        spacing_m=plan.spacing_m,
+        speed_mps=plan.speed_mps,
+        timeout_sec=min(
+            plan.goal_timeout_sec * len(batches),
+            remaining_sec,
+        ),
+    )
+    apply_navigation_batch(lifecycle, result)
+    return result.succeeded
 
 
 def _finish_undispatched_timeout(lifecycle: SquadLifecycle) -> None:

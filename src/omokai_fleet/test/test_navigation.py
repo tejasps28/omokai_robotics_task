@@ -12,6 +12,7 @@ from omokai_fleet import (
     SquadPlan,
     SquadState,
     apply_navigation_batch,
+    is_hold_goal_id,
 )
 
 
@@ -43,6 +44,12 @@ def result(
 
 
 class NavigationBatchTest(unittest.TestCase):
+    def test_hold_goal_id_marks_only_explicit_hold_reservations(self) -> None:
+        self.assertTrue(is_hold_goal_id('executing_split/outbound/robot2/hold'))
+        self.assertFalse(is_hold_goal_id('executing_split/outbound/robot2/room'))
+        self.assertFalse(is_hold_goal_id('hold'))
+        self.assertFalse(is_hold_goal_id(None))
+
     def test_success_batch_completes_active_barrier(self) -> None:
         instance = lifecycle()
         batch = NavigationBatch(

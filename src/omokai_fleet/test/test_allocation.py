@@ -120,6 +120,54 @@ class PartitionRouteTest(unittest.TestCase):
         with self.assertRaises(ValueError):
             partition_route(route_points(3), phase_id=' ')
 
+    def test_assigns_contiguous_segments_by_minimum_approach_distance(self) -> None:
+        points = tuple(
+            RoutePoint(f'p{index}', Pose2D(float(index * 10), 0.0, 0.0))
+            for index in range(6)
+        )
+        poses = {
+            RobotId.ROBOT1: Pose2D(40.0, 0.0, 0.0),
+            RobotId.ROBOT2: Pose2D(0.0, 0.0, 0.0),
+            RobotId.ROBOT3: Pose2D(20.0, 0.0, 0.0),
+        }
+
+        assignments = partition_route(points, current_poses=poses)
+
+        self.assertEqual(
+            (('p4', 'p5'), ('p0', 'p1'), ('p2', 'p3')),
+            tuple(
+                tuple(goal.goal_id.rsplit('/', 1)[-1] for goal in item.goals)
+                for item in assignments
+            ),
+        )
+
+    def test_equal_costs_use_stable_segment_order(self) -> None:
+        poses = {
+            robot_id: Pose2D(0.0, 0.0, 0.0)
+            for robot_id in RobotId
+        }
+
+        assignments = partition_route(route_points(3), current_poses=poses)
+
+        self.assertEqual(
+            ('point0', 'point1', 'point2'),
+            tuple(item.goals[0].goal_id.rsplit('/', 1)[-1] for item in assignments),
+        )
+
+    def test_missing_live_pose_data_is_rejected_and_none_falls_back(self) -> None:
+        points = route_points(3)
+        with self.assertRaises(ValueError):
+            partition_route(
+                points,
+                current_poses={RobotId.ROBOT1: Pose2D(0.0, 0.0, 0.0)},
+            )
+
+        fallback = partition_route(points, current_poses=None)
+        self.assertEqual(
+            ('point0', 'point1', 'point2'),
+            tuple(item.goals[0].goal_id.rsplit('/', 1)[-1] for item in fallback),
+        )
+
 
 class RegroupTest(unittest.TestCase):
     def test_produces_three_distinct_safe_goals(self) -> None:

@@ -279,6 +279,33 @@ class SquadLifecycle:
         self._archive_current()
         self._state = SquadState.SUCCEEDED
 
+    def finish_partial_split(
+        self,
+        outcomes: dict[RobotId, tuple[RobotOutcome, str]],
+    ) -> None:
+        """Finish split after isolated failures and completed survivor work."""
+        self._require_state(SquadState.EXECUTING_SPLIT)
+        if set(outcomes) != set(ROBOT_IDS):
+            raise ValueError('split outcomes must cover every robot')
+        for robot_id in ROBOT_IDS:
+            outcome, reason = outcomes[robot_id]
+            self._replace_active(robot_id, outcome, reason)
+        failures = tuple(
+            item for item in self._current
+            if item.outcome in {RobotOutcome.FAILED, RobotOutcome.TIMED_OUT}
+        )
+        if not failures:
+            raise LifecycleError('partial split requires at least one failure')
+        self._reason = '; '.join(
+            f'{item.robot_id.value}: {item.reason}' for item in failures
+        )
+        self._archive_current()
+        self._state = (
+            SquadState.TIMED_OUT
+            if any(item.outcome is RobotOutcome.TIMED_OUT for item in failures)
+            else SquadState.FAILED
+        )
+
     def _expected_phase(self) -> SquadState:
         plan = self._require_plan()
         if self._state is SquadState.VALIDATED:

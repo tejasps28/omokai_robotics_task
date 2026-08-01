@@ -22,6 +22,7 @@ setup(
     license='Apache-2.0',
     entry_points={
         'console_scripts': [
+            'formation_controller = omokai_fleet.formation_controller:main',
             'omokai-squad = omokai_fleet.operator_cli:main',
         ],
     },

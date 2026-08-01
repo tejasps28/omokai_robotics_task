@@ -25,6 +25,16 @@ from omokai_fleet.lifecycle import (
     SquadSnapshot,
     SquadState,
 )
+from omokai_fleet.formation_tracking import (
+    FormationControlDirective,
+    FormationTrackingConfig,
+    FormationTrackingError,
+    VelocityCommand,
+    follower_command,
+    is_current_formation_state,
+    normalize_angle,
+    tracking_error,
+)
 from omokai_fleet.model import (
     ROBOT_IDS,
     Formation,
@@ -40,6 +50,7 @@ from omokai_fleet.navigation import (
     NavigationResult,
     NavigationStatus,
     apply_navigation_batch,
+    is_hold_goal_id,
 )
 from omokai_fleet.planner import (
     SQUAD_PLAN_SCHEMA,
@@ -70,6 +81,10 @@ __all__ = [
     'Formation',
     'EMERGENCY_MINIMUM_DISTANCE_M',
     'FormationOffset',
+    'FormationControlDirective',
+    'FormationTrackingConfig',
+    'FormationTrackingError',
+    'is_current_formation_state',
     'FakeSquadPlanner',
     'FleetNavigation',
     'GoalSeparation',
@@ -99,6 +114,8 @@ __all__ = [
     'SQUAD_PLAN_SCHEMA',
     'SquadSnapshot',
     'SquadState',
+    'VelocityCommand',
+    'follower_command',
     'formation_goals',
     'formation_offsets',
     'goal_separations',
@@ -111,5 +128,7 @@ __all__ = [
     'execute_squad_mission',
     'emergency_separation_reason',
     'observed_separations',
+    'normalize_angle',
+    'tracking_error',
     'validate_squad_proposal',
 ]
