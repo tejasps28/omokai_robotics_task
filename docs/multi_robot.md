@@ -32,45 +32,47 @@ collision mesh at launch.
 
 ## Run
 
-Start the standalone three-robot stack:
+Start the three-robot stack through the shared challenge runner:
 
 ```bash
-./scripts/run_multi_robot.sh start
+./scripts/run.sh --multi-agent start
 ```
 
 Add `--gui` to open Gazebo. Preview the credential-free mission:
 
 ```bash
-./scripts/run_multi_robot.sh preview --planner fake \
+./scripts/run.sh --multi-agent preview --planner fake \
   "Form a wedge at the dock, inspect separate rooms, and regroup home."
 ```
 
 Run it and approve the displayed plan:
 
 ```bash
-./scripts/run_multi_robot.sh run --planner fake \
+./scripts/run.sh --multi-agent run --planner fake \
   "Form a wedge at the dock, inspect separate rooms, and regroup home."
 ```
 
 Gemini can be selected after setting `GEMINI_API_KEY` in the ignored `.env`:
 
 ```bash
-./scripts/run_multi_robot.sh run --planner gemini \
+./scripts/run.sh --multi-agent run --planner gemini \
   "Form a wedge at the dock, inspect separate rooms, and regroup home."
 ```
 
 Check the latest result or cancel an active mission from another terminal:
 
 ```bash
-./scripts/run_multi_robot.sh status
-./scripts/run_multi_robot.sh cancel
+./scripts/run.sh --multi-agent status
+./scripts/run.sh --multi-agent cancel
 ```
 
 Stop the environment with:
 
 ```bash
-./scripts/run_multi_robot.sh stop
+./scripts/run.sh --multi-agent stop
 ```
+
+The original `run_multi_robot.sh` wrapper remains supported.
 
 ## Expected result
 
@@ -142,9 +144,7 @@ negotiate ownership of a shared corridor.
 Run all ROS-independent regression tests with:
 
 ```bash
-PYTHONPATH=src/omokai_fleet:src/omokai_interfaces:src/omokai_mission:\
-src/omokai_executor:src/omokai_pipeline:src/omokai_bringup \
-  python3 -m pytest -q src/omokai_fleet/test src/omokai_bringup/test
+./scripts/run_slam.sh check
 ```
 
 If startup fails, inspect `docker compose logs robot`, stop, and retry.

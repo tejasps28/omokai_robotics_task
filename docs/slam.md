@@ -23,17 +23,18 @@ conditions.
 
 ## Run the demonstration
 
-No API key is required for this challenge. Start online mapping headlessly:
+No API key is required for this challenge. Start online mapping headlessly
+through the shared challenge runner:
 
 ```bash
-./scripts/run_slam.sh start
+./scripts/run.sh --slam start
 ```
 
 Add `--gui` to open Gazebo and RViz. In a second terminal, start autonomous
 exploration:
 
 ```bash
-./scripts/run_slam.sh explore --exploration-id slam-demo
+./scripts/run.sh --slam explore --exploration-id slam-demo
 ```
 
 The robot continues until no eligible frontier remains or a configured safety
@@ -41,30 +42,32 @@ bound is reached. Inspect progress or request cancellation from another
 terminal:
 
 ```bash
-./scripts/run_slam.sh status slam-demo
-./scripts/run_slam.sh cancel
+./scripts/run.sh --slam status slam-demo
+./scripts/run.sh --slam cancel
 ```
 
 Save the completed live map:
 
 ```bash
-./scripts/run_slam.sh save-map slam-demo
+./scripts/run.sh --slam save-map slam-demo
 ```
 
 The ignored `runtime/maps/` directory will contain `slam-demo.yaml` and its
 PGM image. Restart with that map and verify two named goals:
 
 ```bash
-./scripts/run_slam.sh localize slam-demo
-./scripts/run_slam.sh verify --mission-id saved-map-demo
+./scripts/run.sh --slam localize slam-demo
+./scripts/run.sh --slam verify --mission-id saved-map-demo
 ```
 
 For a visible localization run, use
-`./scripts/run_slam.sh localize slam-demo --gui`. Stop all containers with:
+`./scripts/run.sh --slam localize slam-demo --gui`. Stop with:
 
 ```bash
-./scripts/run_slam.sh stop
+./scripts/run.sh --slam stop
 ```
+
+The original `run_slam.sh` wrapper remains supported.
 
 ## Expected results
 

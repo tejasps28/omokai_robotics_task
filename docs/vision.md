@@ -11,10 +11,10 @@ local deterministic code.
 
 ## Start the environment
 
-Build and start the standalone moving-target GUI:
+Build and start the normal moving-target GUI through the consolidated runner:
 
 ```bash
-./scripts/run_vision.sh start --gui
+./scripts/run.sh --perception start --gui
 ```
 
 The white-coat actor starts behind the parked robot and follows a closed path
@@ -25,13 +25,13 @@ first path, avoiding the startup race that could previously leave it in place.
 Use the explicit stationary mode only for controlled detector tests:
 
 ```bash
-./scripts/run_vision.sh start --gui --stationary-actor
+./scripts/run.sh --perception start --gui --stationary-actor
 ```
 
 Add the local red-coat distractor for attribute and identity testing:
 
 ```bash
-./scripts/run_vision.sh start --gui --stationary-actor --red-actor
+./scripts/run.sh --perception start --gui --stationary-actor --red-actor
 ```
 
 The red-coat actor is a packaged derivative of the pinned Apache-2.0 Black
@@ -42,19 +42,19 @@ older `run_vision.sh` wrapper and `--moving-actor` flag remain supported.
 Omit `--gui` for headless operation. Stop with:
 
 ```bash
-./scripts/run_vision.sh stop
+./scripts/run.sh --perception stop
 ```
 
-Use `run_vision.sh` when starting this demo. Bare `./scripts/start.sh --gui`
-intentionally starts the default/core navigation environment and does not
-provide the vision mission services.
+Use the consolidated task flag when starting this demo. Bare
+`./scripts/start.sh --gui` intentionally starts the default/core navigation
+environment and does not provide the vision mission services.
 
 ## Preview and run a mission
 
 Preview validates and prints the exact bounded mission without moving:
 
 ```bash
-./scripts/run_vision.sh preview \
+./scripts/run.sh --perception preview \
   --target-class person \
   --coat-color white \
   --standoff 1.2 \
@@ -65,7 +65,7 @@ Preview validates and prints the exact bounded mission without moving:
 Run the same mission and approve it interactively:
 
 ```bash
-./scripts/run_vision.sh run \
+./scripts/run.sh --perception run \
   --target-class person \
   --coat-color white \
   --standoff 1.2 \
@@ -76,8 +76,8 @@ Run the same mission and approve it interactively:
 Add `--yes` only for scripted acceptance. Inspect or cancel with:
 
 ```bash
-./scripts/run_vision.sh status
-./scripts/run_vision.sh cancel
+./scripts/run.sh --perception status
+./scripts/run.sh --perception cancel
 ```
 
 ## Observable interfaces

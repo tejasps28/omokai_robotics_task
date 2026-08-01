@@ -62,7 +62,13 @@ adapter.
 ## Simulation
 
 The Docker image contains ROS 2 Jazzy, Gazebo Harmonic, Navigation2, and
-TurtleBot3 Waffle Pi packages. The launch sequence starts:
+TurtleBot3 Waffle Pi packages. One Compose service is shared by the three
+senior challenge modes. `scripts/run.sh` accepts exactly one of `--slam`,
+`--multi-agent`, or `--perception`; `scripts/start.sh` maps that validated mode
+to `slam_navigation.launch.py`, `multi_robot_simulation.launch.py`, or
+`vision_rgbd.launch.py`. No separate challenge image or Compose stack exists.
+
+The selected launch sequence starts:
 
 1. the owned Gazebo world and TurtleBot3 model;
 2. robot state publication and sensor bridges;

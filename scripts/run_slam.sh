@@ -161,16 +161,22 @@ case "${command}" in
   check)
     bash -n \
       "${root}/scripts/start.sh" \
+      "${root}/scripts/run.sh" \
       "${root}/scripts/run_slam.sh" \
+      "${root}/scripts/run_multi_robot.sh" \
       "${root}/scripts/run_task1.sh" \
       "${root}/scripts/stop.sh"
     python3 -m py_compile \
       "${root}/src/omokai_bringup/launch/core_navigation.launch.py" \
+      "${root}/src/omokai_bringup/launch/multi_robot_simulation.launch.py" \
       "${root}/src/omokai_bringup/launch/slam_navigation.launch.py" \
-      "${root}/src/omokai_bringup/launch/saved_map_navigation.launch.py"
+      "${root}/src/omokai_bringup/launch/saved_map_navigation.launch.py" \
+      "${root}/src/omokai_fleet/omokai_fleet/nav2_fleet_adapter.py" \
+      "${root}/src/omokai_fleet/omokai_fleet/operator_cli.py" \
+      "${root}/src/omokai_fleet/omokai_fleet/runner.py"
 
     export PYTHONDONTWRITEBYTECODE=1
-    export PYTHONPATH="${root}/src/omokai_interfaces:${root}/src/omokai_executor:${root}/src/omokai_mission:${root}/src/omokai_pipeline:${root}/src/omokai_exploration:${root}/src/omokai_bringup"
+    export PYTHONPATH="${root}/src/omokai_interfaces:${root}/src/omokai_executor:${root}/src/omokai_mission:${root}/src/omokai_pipeline:${root}/src/omokai_exploration:${root}/src/omokai_bringup:${root}/src/omokai_fleet"
     packages=(
       omokai_interfaces
       omokai_executor
@@ -178,6 +184,7 @@ case "${command}" in
       omokai_pipeline
       omokai_exploration
       omokai_bringup
+      omokai_fleet
     )
     for package in "${packages[@]}"; do
       echo "Testing ${package} ..."
