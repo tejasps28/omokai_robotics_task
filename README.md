@@ -202,8 +202,9 @@ natural-language interpretation. See the
 ## Vision/perception challenge
 
 The default perception scene is a lightweight office layout adapted from
-`office_small`, with a continuously walking white-coat actor. The actor begins outside the parked
-robot's camera view; an approved mission first scans, then detects and follows:
+`office_small`, with a continuously walking white-coat actor. The actor begins
+outside the parked robot's camera view; an approved mission first scans, then
+detects and follows:
 
 ```bash
 ./scripts/run.sh --perception start --gui
@@ -245,3 +246,15 @@ and return home” is interpreted and executed successfully.
 - Local validation accepts only safe schema-compliant missions, then the
   deterministic compiler converts the selected catalog route into ordered Nav2
   goals for execution.
+
+## Video Submissions of the Senior Challenges
+
+- SLAM challenge video: `VIDEO_LINK_PENDING`
+- Multi-agent challenge video: `VIDEO_LINK_PENDING`
+- Vision challenge video: `VIDEO_LINK_PENDING`
+
+Each challenge can also be reviewed independently on
+`feature/slam-navigation`, `feature/multi-agent`, or
+`feature/vision-following`. Those branches retain their task-specific runner
+and README; this integration branch provides the consolidated flag-based
+runner shown above.
