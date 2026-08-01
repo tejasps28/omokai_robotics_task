@@ -21,8 +21,8 @@ from launch.substitutions import EnvironmentVariable
 from launch.substitutions import LaunchConfiguration
 from launch_ros.actions import Node
 
-from omokai_bringup.multi_robot_model import render_namespaced_sdf
-from omokai_bringup.multi_robot_model import render_vision_urdf
+from omokai_bringup.vision_robot_model import render_vision_sdf
+from omokai_bringup.vision_robot_model import render_vision_urdf
 from omokai_bringup.vision_scene import ROBOT_START
 from omokai_bringup.vision_scene import ROBOT_START_YAW_RAD
 from omokai_bringup.vision_scene import RED_ACTOR_START
@@ -34,10 +34,8 @@ def _robot_actions(context, model_path: str, urdf_path: str):
     generated_directory = Path(tempfile.mkdtemp(prefix='omokai-vision-'))
     sdf_path = generated_directory / 'robot1.sdf'
     sdf_path.write_text(
-        render_namespaced_sdf(
-            Path(model_path).read_text(encoding='utf-8'),
-            'robot1',
-            rgbd_camera=True,
+        render_vision_sdf(
+            Path(model_path).read_text(encoding='utf-8'), 'robot1'
         ),
         encoding='utf-8',
     )
