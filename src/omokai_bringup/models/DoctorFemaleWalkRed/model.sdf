@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<sdf version="1.6">
+  <actor name="actor">
+    <skin>
+      <filename>model://DoctorFemaleWalkRed/meshes/DoctorFemaleWalkRed.dae</filename>
+      <scale>1.0</scale>
+    </skin>
+    <!-- World placement is supplied by ros_gz_sim create. -->
+    <pose>0 0 0 0 0 0</pose>
+    <!-- Deliberately no animation: this distractor must remain fully still. -->
+  </actor>
+</sdf>

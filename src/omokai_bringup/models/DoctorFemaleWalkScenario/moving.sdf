@@ -1,0 +1,27 @@
+<?xml version="1.0"?>
+<sdf version="1.9">
+  <actor name="actor">
+    <skin>
+      <filename>model://DoctorFemaleWalk/meshes/DoctorFemaleWalk.dae</filename>
+      <scale>1.0</scale>
+    </skin>
+    <pose>0 0 0 0 0 0</pose>
+    <animation name="walk">
+      <filename>model://DoctorFemaleWalk/meshes/DoctorFemaleWalk.dae</filename>
+      <scale>1.0</scale>
+      <interpolate_x>true</interpolate_x>
+    </animation>
+    <plugin filename="libgazebo_ros_actor_plugin.so"
+            name="gazebo_ros_actor_plugin::GazeboRosActorCommand">
+      <follow_mode>path</follow_mode>
+      <vel_topic>/vision_target/cmd_vel</vel_topic>
+      <path_topic>/vision_target/cmd_path</path_topic>
+      <animation_factor>7.0</animation_factor>
+      <linear_tolerance>0.10</linear_tolerance>
+      <linear_velocity>0.28</linear_velocity>
+      <angular_tolerance>0.0872</angular_tolerance>
+      <angular_velocity>2.5</angular_velocity>
+      <default_rotation>1.57</default_rotation>
+    </plugin>
+  </actor>
+</sdf>

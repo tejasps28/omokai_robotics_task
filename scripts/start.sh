@@ -6,15 +6,93 @@ export HOST_UID="${HOST_UID:-$(id -u)}"
 export HOST_GID="${HOST_GID:-$(id -g)}"
 
 gui=false
-if [[ "${1:-}" == "--gui" ]]; then
-  gui=true
-elif (( $# > 0 )); then
-  echo "Usage: $0 [--gui]" >&2
+actor_motion=auto
+red_actor=false
+print_config=false
+mode=core
+while (( $# > 0 )); do
+  case "$1" in
+    --gui)
+      gui=true
+      ;;
+    --vision|--perception)
+      [[ "${mode}" == core ]] || {
+        echo "Only one perception mode flag may be supplied." >&2
+        exit 2
+      }
+      mode=vision
+      ;;
+    --moving-actor)
+      actor_motion=true
+      ;;
+    --stationary-actor)
+      actor_motion=false
+      ;;
+    --red-actor)
+      red_actor=true
+      ;;
+    --print-config)
+      print_config=true
+      ;;
+    --help|-h)
+      echo "Usage: $0 [--gui] [--moving-actor | --stationary-actor] [--red-actor] [--perception]"
+      exit 0
+      ;;
+    *)
+      echo "Usage: $0 [--gui] [--moving-actor | --stationary-actor] [--red-actor] [--perception]" >&2
+      exit 2
+      ;;
+  esac
+  shift
+done
+
+if [[ "${actor_motion}" != auto && "${mode}" != vision ]]; then
+  echo "--moving-actor and --stationary-actor are valid only with --perception." >&2
+  exit 2
+fi
+if [[ "${red_actor}" == true && "${mode}" != vision ]]; then
+  echo "--red-actor is valid only with --perception." >&2
   exit 2
 fi
 
-mkdir -p "${root}/runtime/artifacts" "${root}/runtime/ros_logs"
+# A translating target is the normal perception demonstration. The explicit
+# stationary override remains available for repeatable detector-only tests.
+if [[ "${actor_motion}" == auto ]]; then
+  if [[ "${mode}" == vision ]]; then
+    actor_motion=true
+  else
+    actor_motion=false
+  fi
+fi
+
+mkdir -p \
+  "${root}/runtime/artifacts" \
+  "${root}/runtime/assets" \
+  "${root}/runtime/ros_logs" \
+  "${root}/runtime/test_reports"
 compose=(docker compose --project-directory "${root}" -f "${root}/compose.yaml")
+
+export OMOKAI_MODE="${mode}"
+export OMOKAI_ACTOR_MOTION="${actor_motion}"
+export OMOKAI_RED_ACTOR="${red_actor}"
+if [[ "${mode}" == vision ]]; then
+  export OMOKAI_LAUNCH_FILE=vision_rgbd.launch.py
+  export OMOKAI_RVIZ="${gui}"
+  export OMOKAI_MAP_FILE=
+else
+  export OMOKAI_LAUNCH_FILE=core_navigation.launch.py
+  export OMOKAI_RVIZ=false
+  export OMOKAI_MAP_FILE=
+fi
+
+if [[ "${print_config}" == true ]]; then
+  printf 'mode=%s\n' "${OMOKAI_MODE}"
+  printf 'launch_file=%s\n' "${OMOKAI_LAUNCH_FILE}"
+  printf 'gui=%s\n' "${gui}"
+  printf 'actor_motion=%s\n' "${OMOKAI_ACTOR_MOTION}"
+  printf 'red_actor=%s\n' "${OMOKAI_RED_ACTOR}"
+  exit 0
+fi
 
 if [[ "${gui}" == true ]]; then
   [[ -n "${DISPLAY:-}" ]] || {
