@@ -2,6 +2,7 @@ import unittest
 import xml.etree.ElementTree as ET
 
 from omokai_bringup.multi_robot_model import render_namespaced_sdf
+from omokai_bringup.multi_robot_model import render_vision_urdf
 
 
 SOURCE = """\
@@ -19,6 +20,9 @@ SOURCE = """\
           <camera_info_topic>camera/camera_info</camera_info_topic>
         </camera>
       </sensor>
+    </link>
+    <link name="camera_rgb_frame">
+      <pose>0.076 0 0.093 0 0 0</pose>
     </link>
     <plugin filename="diff" name="gz::sim::systems::DiffDrive">
       <topic>cmd_vel</topic>
@@ -78,6 +82,57 @@ class MultiRobotModelTest(unittest.TestCase):
     def test_rejects_unsafe_robot_name(self) -> None:
         with self.assertRaises(ValueError):
             render_namespaced_sdf(SOURCE, '../robot')
+
+    def test_configures_one_aligned_rgbd_sensor(self) -> None:
+        root = ET.fromstring(
+            render_namespaced_sdf(SOURCE, 'robot1', rgbd_camera=True)
+        )
+        sensor = next(
+            item for item in root.iter('sensor')
+            if item.get('name') == 'rgbd_camera'
+        )
+
+        self.assertEqual('rgbd_camera', sensor.get('type'))
+        self.assertEqual('/robot1/camera', sensor.findtext('topic'))
+        self.assertEqual(
+            'robot1/camera_rgb_optical_frame',
+            sensor.findtext('gz_frame_id'),
+        )
+        self.assertEqual(
+            '/robot1/camera/camera_info',
+            sensor.findtext('camera/camera_info_topic'),
+        )
+        self.assertEqual(
+            'robot1/camera_rgb_optical_frame',
+            sensor.findtext('camera/optical_frame_id'),
+        )
+        self.assertEqual(
+            '1.5708',
+            sensor.findtext('camera/horizontal_fov'),
+        )
+        self.assertEqual('15', sensor.findtext('update_rate'))
+        camera_frame = next(
+            item for item in root.findall('model/link')
+            if item.get('name') == 'camera_rgb_frame'
+        )
+        self.assertEqual(
+            '-0.22',
+            camera_frame.findtext('pose').split()[4],
+        )
+
+    def test_vision_urdf_matches_camera_pitch(self) -> None:
+        source = """
+        <robot name="robot">
+          <joint name="camera_rgb_joint" type="fixed">
+            <origin xyz="0 0 0" rpy="0 0 0"/>
+          </joint>
+        </robot>
+        """
+        root = ET.fromstring(render_vision_urdf(source))
+        self.assertEqual(
+            '0 -0.22 0',
+            root.find("joint[@name='camera_rgb_joint']/origin").get('rpy'),
+        )
 
     def test_requires_a_model(self) -> None:
         with self.assertRaises(ValueError):

@@ -21,13 +21,20 @@ from launch_ros.actions import Node
 
 from omokai_bringup.multi_robot_model import render_namespaced_sdf
 from omokai_bringup.multi_robot_nav import namespace_nav_parameters
+from omokai_bringup.test_zone_map import generate_test_zone_map
+from omokai_fleet.model import ROBOT_IDS
+from omokai_fleet.scenario import DOCKING_POSES
 import yaml
 
 
-ROBOTS = (
-    ('robot1', '-2.0', '-0.5'),
-    ('robot2', '-1.4', '-0.5'),
-    ('robot3', '-2.0', '0.1'),
+ROBOTS = tuple(
+    (
+        robot_id.value,
+        str(pose.x),
+        str(pose.y),
+        str(pose.yaw),
+    )
+    for robot_id, pose in zip(ROBOT_IDS, DOCKING_POSES)
 )
 
 
@@ -39,7 +46,7 @@ def _robot_actions(context, model_path: str, urdf_path: str):
     )
     actions = []
 
-    for robot_name, x_pose, y_pose in ROBOTS:
+    for robot_name, x_pose, y_pose, yaw_pose in ROBOTS:
         sdf_path = generated_directory / f'{robot_name}.sdf'
         sdf_path.write_text(
             render_namespaced_sdf(source, robot_name),
@@ -80,6 +87,8 @@ def _robot_actions(context, model_path: str, urdf_path: str):
                         y_pose,
                         '-z',
                         '0.01',
+                        '-Y',
+                        yaw_pose,
                     ],
                     output='screen',
                 ),
@@ -96,12 +105,24 @@ def _navigation_actions(
     map_path: str,
 ):
     parameters = yaml.safe_load(Path(params_path).read_text(encoding='utf-8'))
+    demo_max_speed = float(
+        os.environ.get('OMOKAI_DEMO_MAX_SPEED_MPS', '0.18')
+    )
+    if demo_max_speed > 0.26:
+        controller = parameters['controller_server']['ros__parameters'][
+            'FollowPath'
+        ]
+        controller['max_vel_x'] = demo_max_speed
+        controller['max_speed_xy'] = demo_max_speed
+        smoother = parameters['velocity_smoother']['ros__parameters']
+        smoother['max_velocity'][0] = demo_max_speed
+        smoother['min_velocity'][0] = -demo_max_speed
     generated_directory = Path(
         tempfile.mkdtemp(prefix='omokai-multi-nav-')
     )
     actions = []
 
-    for robot_name, x_pose, y_pose in ROBOTS:
+    for robot_name, x_pose, y_pose, yaw_pose in ROBOTS:
         robot_params_path = generated_directory / f'{robot_name}.yaml'
         robot_params_path.write_text(
             yaml.safe_dump(
@@ -137,7 +158,7 @@ def _navigation_actions(
                             'use_sim_time': True,
                             'x': float(x_pose),
                             'y': float(y_pose),
-                            'yaw': 0.0,
+                            'yaw': float(yaw_pose),
                             'timeout_sec': 90.0,
                         }
                     ],
@@ -153,16 +174,13 @@ def generate_launch_description() -> LaunchDescription:
     turtlebot_share = get_package_share_directory('turtlebot3_gazebo')
     ros_gz_share = get_package_share_directory('ros_gz_sim')
     nav2_share = get_package_share_directory('nav2_bringup')
-    turtlebot_navigation_share = get_package_share_directory(
-        'turtlebot3_navigation2'
-    )
-
     gui = LaunchConfiguration('gui')
+    rviz = LaunchConfiguration('rviz')
     verbosity = EnvironmentVariable('GZ_VERBOSITY', default_value='2')
     world = os.path.join(
         bringup_share,
         'worlds',
-        'task1_turtlebot3.world',
+        'multi_robot_test_zone.world',
     )
     model_path = os.path.join(
         turtlebot_share,
@@ -185,10 +203,13 @@ def generate_launch_description() -> LaunchDescription:
         'params',
         'nav2_multirobot_params_all.yaml',
     )
-    map_path = os.path.join(
-        turtlebot_navigation_share,
-        'map',
-        'map.yaml',
+    map_path = generate_test_zone_map(
+        os.path.join(
+            bringup_share,
+            'models',
+            'test_zone',
+            'model.sdf',
+        )
     )
 
     server = IncludeLaunchDescription(
@@ -225,17 +246,55 @@ def generate_launch_description() -> LaunchDescription:
         ],
         output='screen',
     )
+    tf_aggregator = Node(
+        package='omokai_bringup',
+        executable='fleet_tf_aggregator',
+        name='fleet_tf_aggregator',
+        output='screen',
+    )
+    traffic_manager = Node(
+        package='omokai_bringup',
+        executable='fleet_traffic_manager',
+        name='fleet_traffic_manager',
+        output='screen',
+    )
+    formation_controller = Node(
+        package='omokai_fleet',
+        executable='formation_controller',
+        name='fleet_formation_controller',
+        output='screen',
+    )
+    rviz_view = Node(
+        package='rviz2',
+        executable='rviz2',
+        name='fleet_rviz',
+        arguments=[
+            '-d',
+            os.path.join(bringup_share, 'rviz', 'multi_robot.rviz'),
+        ],
+        parameters=[{'use_sim_time': True}],
+        output='screen',
+        condition=IfCondition(rviz),
+    )
 
     return LaunchDescription(
         [
             DeclareLaunchArgument('gui', default_value='false'),
+            DeclareLaunchArgument('rviz', default_value='false'),
             AppendEnvironmentVariable(
                 'GZ_SIM_RESOURCE_PATH',
                 os.path.join(turtlebot_share, 'models'),
             ),
+            AppendEnvironmentVariable(
+                'GZ_SIM_RESOURCE_PATH',
+                os.path.join(bringup_share, 'models'),
+            ),
             server,
             client,
             bridge,
+            tf_aggregator,
+            traffic_manager,
+            formation_controller,
             TimerAction(
                 period=3.0,
                 actions=[
@@ -258,5 +317,6 @@ def generate_launch_description() -> LaunchDescription:
                     )
                 ],
             ),
+            TimerAction(period=10.0, actions=[rviz_view]),
         ]
     )

@@ -50,4 +50,41 @@ def namespace_nav_parameters(
             return f'/{robot_name}{result}'
         return result
 
-    return rewrite(deepcopy(dict(parameters)))
+    result = rewrite(deepcopy(dict(parameters)))
+    amcl = result.get('amcl', {}).get('ros__parameters', {})
+    amcl.update(
+        {
+            # Other robots are valid dynamic lidar returns, not map landmarks.
+            'do_beamskip': True,
+            'beam_skip_distance': 0.5,
+            'beam_skip_threshold': 0.3,
+            'beam_skip_error_threshold': 0.9,
+            'laser_max_range': 3.5,
+        }
+    )
+    global_costmap = (
+        result.get('global_costmap', {})
+        .get('global_costmap', {})
+        .get('ros__parameters', {})
+    )
+    plugins = global_costmap.get('plugins')
+    if isinstance(plugins, list):
+        global_costmap['plugins'] = [
+            plugin for plugin in plugins if plugin != 'obstacle_layer'
+        ]
+    global_costmap.get('obstacle_layer', {})['enabled'] = False
+    collision_monitor = result.get('collision_monitor', {}).get(
+        'ros__parameters',
+        {},
+    )
+    collision_monitor['cmd_vel_out_topic'] = 'cmd_vel_safe'
+    controller = result.get('controller_server', {}).get(
+        'ros__parameters',
+        {},
+    )
+    goal_checker = controller.setdefault('general_goal_checker', {})
+    # Patrol headings are advisory. A generous final-yaw tolerance avoids
+    # spending an entire batch rotating at a waypoint while peers wait.
+    goal_checker['xy_goal_tolerance'] = 0.30
+    goal_checker['yaw_goal_tolerance'] = 1.00
+    return result

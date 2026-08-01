@@ -23,12 +23,32 @@ PARAMETERS = {
             'odom_topic': '/odom',
         }
     },
+    'controller_server': {
+        'ros__parameters': {
+            'general_goal_checker': {
+                'xy_goal_tolerance': 0.25,
+                'yaw_goal_tolerance': 0.25,
+            }
+        }
+    },
     'local_costmap': {
         'local_costmap': {
             'ros__parameters': {
                 'global_frame': 'odom',
                 'robot_base_frame': 'base_link',
                 'scan': {'topic': '<robot_namespace>/scan'},
+            }
+        }
+    },
+    'global_costmap': {
+        'global_costmap': {
+            'ros__parameters': {
+                'plugins': [
+                    'static_layer',
+                    'obstacle_layer',
+                    'inflation_layer',
+                ],
+                'obstacle_layer': {'enabled': True},
             }
         }
     },
@@ -60,6 +80,24 @@ class MultiRobotNavParametersTest(unittest.TestCase):
                 entry['ros_type_name'] == 'geometry_msgs/msg/Twist'
                 for entry in command_entries
             )
+        )
+
+    def test_clock_bridge_uses_the_named_fleet_world(self) -> None:
+        bridge_path = (
+            Path(__file__).resolve().parents[1]
+            / 'config'
+            / 'multi_robot_bridge.yaml'
+        )
+        entries = yaml.safe_load(bridge_path.read_text(encoding='utf-8'))
+        clock = next(
+            entry
+            for entry in entries
+            if entry['ros_topic_name'] == '/clock'
+        )
+
+        self.assertEqual(
+            '/world/multi_robot_test_zone/clock',
+            clock['gz_topic_name'],
         )
 
     def test_rewrites_frames_and_absolute_topics(self) -> None:
@@ -99,6 +137,12 @@ class MultiRobotNavParametersTest(unittest.TestCase):
                 'footprint_topic'
             ],
         )
+        self.assertEqual(
+            'cmd_vel_safe',
+            result['collision_monitor']['ros__parameters'][
+                'cmd_vel_out_topic'
+            ],
+        )
 
     def test_preserves_shared_map_and_relative_topics(self) -> None:
         result = namespace_nav_parameters(PARAMETERS, 'robot1')
@@ -111,6 +155,11 @@ class MultiRobotNavParametersTest(unittest.TestCase):
             'scan',
             result['amcl']['ros__parameters']['scan_topic'],
         )
+        self.assertTrue(result['amcl']['ros__parameters']['do_beamskip'])
+        self.assertEqual(
+            3.5,
+            result['amcl']['ros__parameters']['laser_max_range'],
+        )
 
     def test_does_not_mutate_source(self) -> None:
         namespace_nav_parameters(PARAMETERS, 'robot2')
@@ -119,6 +168,27 @@ class MultiRobotNavParametersTest(unittest.TestCase):
             'base_footprint',
             PARAMETERS['amcl']['ros__parameters']['base_frame_id'],
         )
+
+    def test_global_planner_uses_static_map_for_fleet_coordination(self) -> None:
+        result = namespace_nav_parameters(PARAMETERS, 'robot2')
+        parameters = result['global_costmap']['global_costmap'][
+            'ros__parameters'
+        ]
+
+        self.assertEqual(
+            ['static_layer', 'inflation_layer'],
+            parameters['plugins'],
+        )
+        self.assertFalse(parameters['obstacle_layer']['enabled'])
+
+    def test_patrol_goal_tolerance_avoids_heading_only_deadlock(self) -> None:
+        result = namespace_nav_parameters(PARAMETERS, 'robot1')
+        checker = result['controller_server']['ros__parameters'][
+            'general_goal_checker'
+        ]
+
+        self.assertEqual(0.30, checker['xy_goal_tolerance'])
+        self.assertEqual(1.00, checker['yaw_goal_tolerance'])
 
 
 if __name__ == '__main__':

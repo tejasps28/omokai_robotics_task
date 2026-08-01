@@ -13,7 +13,16 @@ setup(
         ('share/' + package_name, ['package.xml']),
         ('share/' + package_name + '/config', glob('config/*.yaml')),
         ('share/' + package_name + '/launch', glob('launch/*.launch.py')),
+        ('share/' + package_name + '/rviz', glob('rviz/*.rviz')),
         ('share/' + package_name + '/worlds', glob('worlds/*.world')),
+        (
+            'share/' + package_name + '/models/test_zone',
+            glob('models/test_zone/*.*'),
+        ),
+        (
+            'share/' + package_name + '/models/test_zone/meshes',
+            glob('models/test_zone/meshes/*'),
+        ),
     ],
     install_requires=['setuptools'],
     zip_safe=True,
@@ -24,6 +33,8 @@ setup(
     entry_points={
         'console_scripts': [
             'foundation_smoke_test = omokai_bringup.foundation_smoke_test:main',
+            'fleet_tf_aggregator = omokai_bringup.tf_aggregator:main',
+            'fleet_traffic_manager = omokai_bringup.traffic_manager:main',
             'initial_pose_publisher = omokai_bringup.initial_pose_publisher:main',
             'task1_mission_runner = omokai_bringup.task1_mission_runner:main',
         ],
