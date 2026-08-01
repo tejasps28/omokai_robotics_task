@@ -1,0 +1,194 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+  - Class: rviz_common/Views
+    Name: Views
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_default_plugins/Grid
+      Name: Grid
+      Enabled: true
+      Plane: XY
+      Cell Size: 1
+      Plane Cell Count: 30
+      Color: 120; 120; 125
+      Value: true
+    - Class: rviz_default_plugins/Map
+      Name: Shared House Map
+      Enabled: true
+      Alpha: 0.8
+      Color Scheme: map
+      Draw Behind: true
+      Topic:
+        Value: /robot1/map
+        Reliability Policy: Reliable
+        Durability Policy: Transient Local
+        History Policy: Keep Last
+        Depth: 1
+      Value: true
+    - Class: rviz_default_plugins/RobotModel
+      Name: Robot 1
+      Enabled: true
+      Description Source: Topic
+      Description Topic:
+        Value: /robot1/robot_description
+        Reliability Policy: Reliable
+        Durability Policy: Transient Local
+        History Policy: Keep Last
+        Depth: 1
+      Visual Enabled: true
+      Collision Enabled: false
+      TF Prefix: robot1
+      Value: true
+    - Class: rviz_default_plugins/RobotModel
+      Name: Robot 2
+      Enabled: true
+      Description Source: Topic
+      Description Topic:
+        Value: /robot2/robot_description
+        Reliability Policy: Reliable
+        Durability Policy: Transient Local
+        History Policy: Keep Last
+        Depth: 1
+      Visual Enabled: true
+      Collision Enabled: false
+      TF Prefix: robot2
+      Value: true
+    - Class: rviz_default_plugins/RobotModel
+      Name: Robot 3
+      Enabled: true
+      Description Source: Topic
+      Description Topic:
+        Value: /robot3/robot_description
+        Reliability Policy: Reliable
+        Durability Policy: Transient Local
+        History Policy: Keep Last
+        Depth: 1
+      Visual Enabled: true
+      Collision Enabled: false
+      TF Prefix: robot3
+      Value: true
+    - Class: rviz_default_plugins/LaserScan
+      Name: Robot 1 Scan
+      Enabled: true
+      Topic:
+        Value: /robot1/scan
+        Reliability Policy: Best Effort
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 5
+      Color: 255; 70; 70
+      Color Transformer: FlatColor
+      Style: Points
+      Size (Pixels): 3
+      Value: true
+    - Class: rviz_default_plugins/LaserScan
+      Name: Robot 2 Scan
+      Enabled: true
+      Topic:
+        Value: /robot2/scan
+        Reliability Policy: Best Effort
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 5
+      Color: 70; 220; 90
+      Color Transformer: FlatColor
+      Style: Points
+      Size (Pixels): 3
+      Value: true
+    - Class: rviz_default_plugins/LaserScan
+      Name: Robot 3 Scan
+      Enabled: true
+      Topic:
+        Value: /robot3/scan
+        Reliability Policy: Best Effort
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 5
+      Color: 70; 120; 255
+      Color Transformer: FlatColor
+      Style: Points
+      Size (Pixels): 3
+      Value: true
+    - Class: rviz_default_plugins/Path
+      Name: Robot 1 Plan
+      Enabled: true
+      Topic:
+        Value: /robot1/plan
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 5
+      Color: 255; 70; 70
+      Line Style: Lines
+      Line Width: 0.04
+      Value: true
+    - Class: rviz_default_plugins/Path
+      Name: Robot 2 Plan
+      Enabled: true
+      Topic:
+        Value: /robot2/plan
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 5
+      Color: 70; 220; 90
+      Line Style: Lines
+      Line Width: 0.04
+      Value: true
+    - Class: rviz_default_plugins/Path
+      Name: Robot 3 Plan
+      Enabled: true
+      Topic:
+        Value: /robot3/plan
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 5
+      Color: 70; 120; 255
+      Line Style: Lines
+      Line Width: 0.04
+      Value: true
+    - Class: rviz_default_plugins/PoseArray
+      Name: Fleet Pose Check
+      Enabled: true
+      Topic:
+        Value: /omokai_fleet/poses
+        Reliability Policy: Reliable
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Depth: 5
+      Color: 255; 220; 30
+      Shape: Arrow (Flat)
+      Shaft Length: 0.35
+      Shaft Radius: 0.04
+      Head Length: 0.12
+      Head Radius: 0.08
+      Value: true
+  Enabled: true
+  Global Options:
+    Background Color: 32; 34; 38
+    Fixed Frame: map
+    Frame Rate: 30
+  Name: root
+  Tools:
+    - Class: rviz_default_plugins/Interact
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+  Transformation:
+    Current:
+      Class: rviz_default_plugins/TF
+  Views:
+    Current:
+      Class: rviz_default_plugins/TopDownOrtho
+      Name: House Overview
+      Scale: 22
+      Target Frame: map
+      X: 0
+      Y: 0
+Window Geometry:
+  Height: 900
+  Width: 1200
+  X: 60
+  Y: 60

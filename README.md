@@ -16,6 +16,13 @@ The repository also includes the SLAM challenge: the same robot can build a
 map from live LiDAR data, autonomously explore deterministic frontiers, save
 the map, restart with AMCL localization, and navigate named locations.
 
+The multi-robot challenge runs three namespaced TurtleBots with independent
+Nav2 stacks. They form a line or wedge, split a trusted route, monitor
+separation, and regroup.
+
+The vision challenge adds local person detection, aligned RGB-D localization,
+operator snapshots, and deterministic stand-off following.
+
 ## Requirements
 
 - Linux with Docker Engine and Docker Compose v2
@@ -131,7 +138,36 @@ The source is split by responsibility:
 - `omokai_pipeline`: application orchestration and operator CLI;
 - `omokai_exploration`: deterministic frontier selection and exploration
   lifecycle;
+- `omokai_fleet`: squad validation, formation geometry, route allocation,
+  synchronized execution, and cancellation;
 - `omokai_bringup`: Gazebo, SLAM Toolbox, AMCL, Nav2, and live runners.
+
+## One runner for all three senior challenges
+
+SLAM, multi-agent, and perception modes use the same Dockerfile, image,
+Compose service, runtime directories, and stop command. Select the challenge
+with one flag; internally the selected ROS launch file is the only simulation
+entrypoint that changes:
+
+```bash
+./scripts/run.sh --slam start --gui
+./scripts/run.sh --multi-agent start --gui
+./scripts/run.sh --perception start --gui
+```
+
+Each flag also routes the challenge-specific operations:
+
+```bash
+./scripts/run.sh --slam explore --exploration-id slam-demo
+./scripts/run.sh --multi-agent run --planner fake \
+  "You three split the inspection route in a wedge and regroup home."
+./scripts/run.sh --perception run \
+  --mission-id moving-person-demo --coat-color white --yes
+```
+
+Only one challenge mode can be active at a time. The existing
+`run_slam.sh`, `run_multi_robot.sh`, and `run_vision.sh` wrappers remain
+available for compatibility.
 
 ## SLAM challenge
 
@@ -149,11 +185,43 @@ Add `--gui` to the `start` or `localize` command to open Gazebo and RViz.
 See the [SLAM demonstration guide](docs/slam.md) for status, cancellation,
 expected output, architecture, and limitations.
 
+## Multi-robot challenge
+
+Start three robots headlessly and run the credential-free demonstration:
+
+```bash
+./scripts/run_multi_robot.sh start
+./scripts/run_multi_robot.sh run --planner fake \
+  "You three split the inspection route in a wedge and regroup home."
+```
+
+Use `--gui` with `start` for Gazebo, or `--planner gemini` for hosted
+natural-language interpretation. See the
+[multi-robot demonstration guide](docs/multi_robot.md).
+
+## Vision/perception challenge
+
+The default perception scene is a lightweight office layout adapted from
+`office_small`, with a continuously walking white-coat actor. The actor begins outside the parked
+robot's camera view; an approved mission first scans, then detects and follows:
+
+```bash
+./scripts/run.sh --perception start --gui
+./scripts/run.sh --perception run \
+  --mission-id vision-demo --coat-color white --yes
+```
+
+Use `--stationary-actor` on `start` only for detector and identity regression
+tests. See the [vision demonstration guide](docs/vision.md).
+
 ## Documentation
 
 - [Architecture](docs/architecture.md)
 - [Mission format](docs/mission_format.md)
 - [SLAM and autonomous navigation](docs/slam.md)
+- [Multi-robot formation and coordination](docs/multi_robot.md)
+- [Vision target detection and following](docs/vision.md)
+- [Vision verification and handoff](docs/vision_testing.md)
 - [Sources and licenses](docs/sources.md)
 - [Approach to the additional challenges](docs/future_work.md)
 
@@ -178,11 +246,3 @@ and return home” is interpreted and executed successfully.
 - Local validation accepts only safe schema-compliant missions, then the
   deterministic compiler converts the selected catalog route into ordered Nav2
   goals for execution.
-
-## Video Submission of the SLAM Challenge
-
-SLAM challenge video: `VIDEO_LINK_PENDING`
-
-The recording will show online map construction from an empty occupancy grid,
-autonomous frontier exploration, map persistence, AMCL localization against
-the saved map, and navigation to the documented named locations.
