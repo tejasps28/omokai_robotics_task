@@ -176,3 +176,11 @@ and return home” is interpreted and executed successfully.
 - Local validation accepts only safe schema-compliant missions, then the
   deterministic compiler converts the selected catalog route into ordered Nav2
   goals for execution.
+
+## Video Submission of the Multi-Agent Challenge
+
+Multi-agent challenge video: `VIDEO_LINK_PENDING`
+
+The recording will show the three independently namespaced robots forming at
+the dock, moving in formation, inspecting separate rooms, respecting shared
+traffic constraints, and regrouping safely.
