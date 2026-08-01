@@ -1,4 +1,4 @@
-# Natural-Language Ground Robot Task 1
+# Natural-Language Ground Robot and Vision Following
 
 This project turns a natural-language instruction into a bounded robot mission
 and executes it on a simulated TurtleBot3:
@@ -11,6 +11,11 @@ The language model proposes intent only. It cannot publish ROS messages or
 choose arbitrary coordinates. A local validator accepts only known routes and
 safe parameters, then a deterministic executor sends the corresponding poses
 to Nav2.
+
+The standalone vision challenge adds local person detection, aligned RGB-D
+localization, operator snapshots, and deterministic stand-off following. The
+operator can request a white, red, or unconstrained coat colour while rejected
+people remain marked in red and cannot command motion.
 
 ## Requirements
 
@@ -125,12 +130,31 @@ The source is split by responsibility:
 - `omokai_mission`: LLM adapters, validation, route catalog, and compiler;
 - `omokai_executor`: deterministic state machine and Nav2 adapter;
 - `omokai_pipeline`: application orchestration and operator CLI;
-- `omokai_bringup`: Gazebo, AMCL, Nav2, and live mission runner.
+- `omokai_perception`: YOLOX inference, coat selection, tracking, localization,
+  and snapshots;
+- `omokai_following`: mission coordination, active search, safety, and bounded
+  visual following;
+- `omokai_bringup`: Gazebo, the aligned RGB-D scene, actors, and visualization.
+
+## Vision challenge
+
+Start the moving white-coat actor and optional red distractor in Gazebo/RViz:
+
+```bash
+./scripts/run_vision.sh start --gui --red-actor
+./scripts/run_vision.sh run \
+  --mission-id vision-demo --target-class person \
+  --coat-color white --standoff 1.2 --max-speed 0.38 --yes
+```
+
+Use `status`, `cancel`, and `stop` through the same script. See the
+[vision guide](docs/vision.md) for expected behavior and limitations.
 
 ## Documentation
 
 - [Architecture](docs/architecture.md)
 - [Mission format](docs/mission_format.md)
+- [Vision target detection and following](docs/vision.md)
 - [Sources and licenses](docs/sources.md)
 - [Approach to the additional challenges](docs/future_work.md)
 
@@ -155,3 +179,11 @@ and return home” is interpreted and executed successfully.
 - Local validation accepts only safe schema-compliant missions, then the
   deterministic compiler converts the selected catalog route into ordered Nav2
   goals for execution.
+
+## Video Submission of the Vision Challenge
+
+Vision challenge video: `VIDEO_LINK_PENDING`
+
+The recording will show bounded search from an initially parked robot,
+white-versus-red target selection, the acquisition notification and snapshot,
+aligned RGB-D localization, following, stand-off, and safe cancellation.
