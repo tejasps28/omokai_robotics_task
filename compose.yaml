@@ -20,6 +20,8 @@ services:
       TURTLEBOT3_MODEL: ${TURTLEBOT3_MODEL:-waffle_pi}
       GZ_VERBOSITY: ${GZ_VERBOSITY:-2}
       GZ_SIM_HEADLESS_RENDERING: "1"
+      OMOKAI_MODE: ${OMOKAI_MODE:-core}
+      OMOKAI_MAP_FILE: ${OMOKAI_MAP_FILE:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OMOKAI_OPENAI_MODEL: ${OMOKAI_OPENAI_MODEL:-gpt-5.6}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
@@ -31,14 +33,18 @@ services:
       - type: bind
         source: ./runtime/ros_logs
         target: /home/omokai/.ros
+      - type: bind
+        source: ./runtime/maps
+        target: /data/maps
     security_opt:
       - no-new-privileges:true
     command:
       - ros2
       - launch
       - omokai_bringup
-      - core_navigation.launch.py
+      - ${OMOKAI_LAUNCH_FILE:-core_navigation.launch.py}
       - gui:=false
+      - map:=${OMOKAI_MAP_FILE:-unused}
     healthcheck:
       test: ["CMD", "/usr/local/bin/omokai-healthcheck"]
       interval: 5s
