@@ -4,12 +4,14 @@ FROM ${ROS_IMAGE}
 ARG DEBIAN_FRONTEND=noninteractive
 ARG HOST_UID=1000
 ARG HOST_GID=1000
+ARG ACTOR_PLUGIN_REV=e170a60b4732b0667b90b171dacb19e73208ccfd
 
 SHELL ["/bin/bash", "-o", "pipefail", "-c"]
 
 RUN apt-get update && apt-get install -y --no-install-recommends \
     build-essential \
     ca-certificates \
+    git \
     python3-colcon-common-extensions \
     python3-jsonschema \
     ros-jazzy-nav2-bringup \
@@ -20,6 +22,11 @@ RUN apt-get update && apt-get install -y --no-install-recommends \
     ros-jazzy-turtlebot3-navigation2 \
     ros-jazzy-turtlebot3-simulations \
     && rm -rf /var/lib/apt/lists/*
+
+ADD --checksum=sha256:c5c2d13e59ae883e6af3b45daea64af4833a4951c92d116ec270d9ddbe998063 \
+    https://media.githubusercontent.com/media/opencv/opencv_zoo/main/models/object_detection_yolox/object_detection_yolox_2022nov.onnx \
+    /opt/omokai_models/object_detection_yolox_2022nov.onnx
+RUN chmod 0444 /opt/omokai_models/object_detection_yolox_2022nov.onnx
 
 RUN if getent group "${HOST_GID}" >/dev/null; then \
       existing_group="$(getent group "${HOST_GID}" | cut -d: -f1)"; \
@@ -44,6 +51,11 @@ ENV ROS_DISTRO=jazzy \
     RCUTILS_LOGGING_USE_STDOUT=1
 
 WORKDIR /opt/omokai_ws
+RUN git clone --filter=blob:none --no-checkout \
+      https://github.com/blackcoffeerobotics/gazebo-ros-actor-plugin.git \
+      src/gazebo_ros_actor_plugin \
+    && git -C src/gazebo_ros_actor_plugin checkout "${ACTOR_PLUGIN_REV}" \
+    && rm -rf src/gazebo_ros_actor_plugin/.git
 COPY src ./src
 
 RUN source /opt/ros/${ROS_DISTRO}/setup.bash \

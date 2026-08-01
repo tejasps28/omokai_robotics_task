@@ -1,0 +1,112 @@
+Panels:
+  - Class: rviz_common/Displays
+    Name: Displays
+Visualization Manager:
+  Class: ""
+  Displays:
+    - Class: rviz_default_plugins/RobotModel
+      Description Source: Topic
+      Description Topic:
+        Depth: 5
+        Durability Policy: Transient Local
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /robot1/robot_description
+      Enabled: true
+      Name: Robot
+      TF Prefix: robot1
+      Visual Enabled: true
+    - Class: rviz_default_plugins/TF
+      Enabled: true
+      Frame Timeout: 15
+      Name: TF
+      Show Arrows: true
+      Show Axes: true
+      Show Names: false
+    - Class: rviz_default_plugins/PointCloud2
+      Alpha: 1
+      Autocompute Intensity Bounds: true
+      Autocompute Value Bounds:
+        Max Value: 10
+        Min Value: -10
+        Value: true
+      Axis: Z
+      Channel Name: intensity
+      Color Transformer: RGB8
+      Decay Time: 0
+      Enabled: true
+      Name: Aligned RGB-D cloud
+      Position Transformer: XYZ
+      Selectable: true
+      Queue Size: 10
+      Size (Pixels): 2
+      Style: Flat Squares
+      Topic: /robot1/camera/points
+      Unreliable: false
+    - Class: rviz_default_plugins/Image
+      Enabled: true
+      Max Value: 1
+      Median window: 5
+      Min Value: 0
+      Name: RGB image
+      Normalize Range: true
+      Queue Size: 10
+      Topic:
+        Depth: 10
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /robot1/camera/image
+    - Class: rviz_default_plugins/Image
+      Enabled: true
+      Max Value: 1
+      Median window: 5
+      Min Value: 0
+      Name: Person detection
+      Normalize Range: true
+      Queue Size: 2
+      Topic:
+        Depth: 2
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /vision/detections/image
+    - Class: rviz_default_plugins/Image
+      Enabled: true
+      Max Value: 8
+      Median window: 5
+      Min Value: 0.12
+      Name: Depth image
+      Normalize Range: true
+      Queue Size: 10
+      Topic:
+        Depth: 10
+        Durability Policy: Volatile
+        History Policy: Keep Last
+        Reliability Policy: Reliable
+        Value: /robot1/camera/depth_visualization
+  Enabled: true
+  Global Options:
+    Background Color: 35; 35; 35
+    Fixed Frame: robot1/base_footprint
+    Frame Rate: 30
+  Name: root
+  Tools:
+    - Class: rviz_default_plugins/Interact
+    - Class: rviz_default_plugins/MoveCamera
+    - Class: rviz_default_plugins/Select
+    - Class: rviz_default_plugins/FocusCamera
+  Views:
+    Current:
+      Class: rviz_default_plugins/Orbit
+      Distance: 4
+      Focal Point:
+        X: 1.5
+        Y: 0
+        Z: 0.8
+      Pitch: 0.55
+      Target Frame: robot1/base_footprint
+      Yaw: 3.14
+Window Geometry:
+  Height: 900
+  Width: 1500

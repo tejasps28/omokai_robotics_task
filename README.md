@@ -221,7 +221,6 @@ tests. See the [vision demonstration guide](docs/vision.md).
 - [SLAM and autonomous navigation](docs/slam.md)
 - [Multi-robot formation and coordination](docs/multi_robot.md)
 - [Vision target detection and following](docs/vision.md)
-- [Vision verification and handoff](docs/vision_testing.md)
 - [Sources and licenses](docs/sources.md)
 - [Approach to the additional challenges](docs/future_work.md)
 

@@ -21,15 +21,16 @@ serialization, reload, and obstacle-aware navigation to two named goals. See
 
 ## Vision target detection and following
 
-The perception path would separate detector, tracker, target localizer,
-snapshot notification, and follower. The operator would configure the target
-class and confidence threshold through the mission schema.
+This challenge is implemented. A local YOLOX person detector, deterministic
+coat-colour selector, temporal identity tracker, aligned RGB-D localizer,
+exactly-once snapshot path, and bounded follower run in a dedicated room. The
+normal demonstration actor translates through a closed patrol; a stationary
+override and red-coat distractor support controlled identity tests.
 
-On first confirmed detection, the system would store a timestamped image for
-the operator. Depth or LiDAR association would estimate the target in the map
-frame. A deterministic follower—not the LLM—would continuously send bounded
-standoff goals to Nav2. Target loss, maximum pursuit time/distance, map bounds,
-and emergency stop would remain local safety constraints.
+The LLM remains outside perception and motion control. Target loss,
+reacquisition, mission timeout, velocity limits, stand-off, protected-sector
+depth, cancellation, and zero-on-exit behavior are enforced locally. See
+[vision target detection and following](vision.md).
 
 ## Multi-robot coordination
 
