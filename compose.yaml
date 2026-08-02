@@ -24,6 +24,7 @@ services:
       OMOKAI_OPENAI_MODEL: ${OMOKAI_OPENAI_MODEL:-gpt-5.6}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       OMOKAI_GEMINI_MODEL: ${OMOKAI_GEMINI_MODEL:-gemini-2.5-flash}
+      OMOKAI_MODE: ${OMOKAI_MODE:-core}
     volumes:
       - type: bind
         source: ./runtime/artifacts
@@ -37,8 +38,8 @@ services:
       - ros2
       - launch
       - omokai_bringup
-      - core_navigation.launch.py
-      - gui:=false
+      - ${OMOKAI_LAUNCH_FILE:-core_navigation.launch.py}
+      - gui:=${OMOKAI_GUI:-false}
     healthcheck:
       test: ["CMD", "/usr/local/bin/omokai-healthcheck"]
       interval: 5s

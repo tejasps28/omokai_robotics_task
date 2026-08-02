@@ -22,5 +22,5 @@ services:
       - ros2
       - launch
       - omokai_bringup
-      - core_navigation.launch.py
+      - ${OMOKAI_LAUNCH_FILE:-core_navigation.launch.py}
       - gui:=true
