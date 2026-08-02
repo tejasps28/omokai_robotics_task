@@ -249,7 +249,7 @@ and return home” is interpreted and executed successfully.
 
 ## Video Submissions of the Senior Challenges
 
-- SLAM challenge video: `VIDEO_LINK_PENDING`
+- [SLAM challenge demonstration video](https://drive.google.com/file/d/1fsejQN0ZJ2RPXQ1CLiTKOEt4595RYH2N/view?usp=drive_link)
 - Multi-agent challenge video: `VIDEO_LINK_PENDING`
 - Vision challenge video: `VIDEO_LINK_PENDING`
 
