@@ -20,12 +20,12 @@ services:
       TURTLEBOT3_MODEL: ${TURTLEBOT3_MODEL:-waffle_pi}
       GZ_VERBOSITY: ${GZ_VERBOSITY:-2}
       GZ_SIM_HEADLESS_RENDERING: "1"
-      OMOKAI_MODE: ${OMOKAI_MODE:-core}
-      OMOKAI_MAP_FILE: ${OMOKAI_MAP_FILE:-}
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OMOKAI_OPENAI_MODEL: ${OMOKAI_OPENAI_MODEL:-gpt-5.6}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
       OMOKAI_GEMINI_MODEL: ${OMOKAI_GEMINI_MODEL:-gemini-2.5-flash}
+      OMOKAI_MODE: ${OMOKAI_MODE:-core}
+      OMOKAI_MAP_FILE: ${OMOKAI_MAP_FILE:-}
       OMOKAI_DEMO_MAX_SPEED_MPS: ${OMOKAI_DEMO_MAX_SPEED_MPS:-0.18}
       OMOKAI_ACTOR_MOTION: ${OMOKAI_ACTOR_MOTION:-false}
       OMOKAI_RED_ACTOR: ${OMOKAI_RED_ACTOR:-false}
@@ -53,7 +53,7 @@ services:
       - launch
       - omokai_bringup
       - ${OMOKAI_LAUNCH_FILE:-core_navigation.launch.py}
-      - gui:=false
+      - gui:=${OMOKAI_GUI:-false}
       - map:=${OMOKAI_MAP_FILE:-unused}
     healthcheck:
       test: ["CMD", "/usr/local/bin/omokai-healthcheck"]

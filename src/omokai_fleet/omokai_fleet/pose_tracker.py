@@ -36,10 +36,18 @@ class FleetPoseTracker:
         self._pose_messages = {}
         self._received_at: dict[RobotId, float] = {}
         self._tf_buffer = Buffer()
+        # FleetNav2Adapter drives three action clients from the same mission
+        # node. Under Gazebo GUI load, its single-callback spin loop can spend
+        # more than the freshness window processing action/feedback callbacks,
+        # starving TF updates for otherwise healthy stationary robots. Let
+        # tf2_ros own a dedicated listener node and executor so every robot's
+        # map->base_link transform is refreshed independently. The safety age
+        # check remains enabled; this only removes callback-queue starvation as
+        # a false failure source.
         self._tf_listener = TransformListener(
             self._tf_buffer,
-            node,
-            spin_thread=False,
+            None,
+            spin_thread=True,
         )
         self._publisher = node.create_publisher(
             PoseArray,
