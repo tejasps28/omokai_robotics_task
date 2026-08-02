@@ -181,7 +181,7 @@ and return home” is interpreted and executed successfully.
 
 ## Video Submission of the SLAM Challenge
 
-SLAM challenge video: `VIDEO_LINK_PENDING`
+[SLAM challenge demonstration video](https://drive.google.com/file/d/1fsejQN0ZJ2RPXQ1CLiTKOEt4595RYH2N/view?usp=drive_link)
 
 The recording will show online map construction from an empty occupancy grid,
 autonomous frontier exploration, map persistence, AMCL localization against
