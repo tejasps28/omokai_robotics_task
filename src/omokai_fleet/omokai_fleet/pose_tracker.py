@@ -7,6 +7,7 @@ from time import monotonic
 from typing import Any
 
 from geometry_msgs.msg import Pose, PoseArray, PoseWithCovarianceStamped
+from tf2_msgs.msg import TFMessage
 from rclpy.time import Time
 from rclpy.qos import DurabilityPolicy, QoSProfile, ReliabilityPolicy
 from tf2_ros import Buffer, TransformException, TransformListener
@@ -25,7 +26,7 @@ class FleetPoseTracker:
         node: Any,
         *,
         minimum_m: float = EMERGENCY_MINIMUM_DISTANCE_M,
-        maximum_age_sec: float = 5.0,
+        maximum_age_sec: float = 15.0,
         clock=monotonic,
     ) -> None:
         self._minimum_m = minimum_m
@@ -66,6 +67,19 @@ class FleetPoseTracker:
                     message,
                 ),
                 pose_qos,
+            )
+            for robot_id in ROBOT_IDS
+        )
+        # Gazebo publishes each robot's dynamic transforms on a namespaced
+        # topic. The fleet aggregator republishes them on /tf, but that extra
+        # hop can drop messages under GUI load. Feed namespaced streams
+        # directly into the same buffer as a loss-resistant path.
+        self._tf_subscriptions = tuple(
+            node.create_subscription(
+                TFMessage,
+                f'/{robot_id.value}/tf',
+                self._on_namespaced_tf,
+                100,
             )
             for robot_id in ROBOT_IDS
         )
@@ -131,6 +145,17 @@ class FleetPoseTracker:
         self._pose_messages[robot_id] = message.pose.pose
         self._received_at[robot_id] = self._clock()
         self._publish_snapshot()
+
+    def _on_namespaced_tf(self, message: TFMessage) -> None:
+        for transform in message.transforms:
+            try:
+                self._tf_buffer.set_transform(
+                    transform,
+                    'omokai_fleet_direct_tf',
+                    is_static=False,
+                )
+            except (KeyError, TypeError, ValueError):
+                continue
 
     def _refresh_from_tf(self) -> None:
         for robot_id in ROBOT_IDS:

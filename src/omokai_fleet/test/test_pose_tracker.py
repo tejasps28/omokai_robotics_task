@@ -7,6 +7,7 @@ from unittest.mock import Mock
 
 try:
     from geometry_msgs.msg import TransformStamped
+    from tf2_msgs.msg import TFMessage
     from omokai_fleet.pose_tracker import FleetPoseTracker
     from omokai_fleet.model import ROBOT_IDS
     ROS_AVAILABLE = True
@@ -20,7 +21,7 @@ class FleetPoseTrackerRefreshTest(unittest.TestCase):
         now = [100.0]
         tracker = object.__new__(FleetPoseTracker)
         tracker._clock = lambda: now[0]
-        tracker._maximum_age_sec = 5.0
+        tracker._maximum_age_sec = 15.0
         tracker._poses = {}
         tracker._pose_messages = {}
         tracker._received_at = {}
@@ -49,6 +50,22 @@ class FleetPoseTrackerRefreshTest(unittest.TestCase):
         tracker._refresh_from_tf()
         self.assertIsNone(tracker.readiness_reason())
         self.assertEqual(set(ROBOT_IDS), set(tracker._poses))
+
+    def test_namespaced_tf_is_inserted_into_buffer(self) -> None:
+        tracker = object.__new__(FleetPoseTracker)
+        tracker._tf_buffer = Mock()
+        message = TransformStamped()
+        message.header.frame_id = 'robot3/odom'
+        message.child_frame_id = 'robot3/base_link'
+        tf_message = TFMessage(transforms=[message])
+
+        tracker._on_namespaced_tf(tf_message)
+
+        tracker._tf_buffer.set_transform.assert_called_once_with(
+            message,
+            'omokai_fleet_direct_tf',
+            is_static=False,
+        )
 
 
 if __name__ == '__main__':
