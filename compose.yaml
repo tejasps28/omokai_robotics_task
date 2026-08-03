@@ -23,7 +23,12 @@ services:
       OPENAI_API_KEY: ${OPENAI_API_KEY:-}
       OMOKAI_OPENAI_MODEL: ${OMOKAI_OPENAI_MODEL:-gpt-5.6}
       GEMINI_API_KEY: ${GEMINI_API_KEY:-}
-      OMOKAI_GEMINI_MODEL: ${OMOKAI_GEMINI_MODEL:-gemini-2.5-flash}
+      OMOKAI_GEMINI_MODEL: ${OMOKAI_GEMINI_MODEL:-gemini-3.6-flash}
+      OMOKAI_DEMO_MAX_SPEED_MPS: ${OMOKAI_DEMO_MAX_SPEED_MPS:-0.18}
+      OMOKAI_MODE: ${OMOKAI_MODE:-core}
+      OMOKAI_MAP_FILE: ${OMOKAI_MAP_FILE:-}
+      OMOKAI_ACTOR_MOTION: ${OMOKAI_ACTOR_MOTION:-false}
+      OMOKAI_RED_ACTOR: ${OMOKAI_RED_ACTOR:-false}
     volumes:
       - type: bind
         source: ./runtime/artifacts
@@ -31,14 +36,25 @@ services:
       - type: bind
         source: ./runtime/ros_logs
         target: /home/omokai/.ros
+      - type: bind
+        source: ./runtime/maps
+        target: /data/maps
+      - type: bind
+        source: ./runtime/test_reports
+        target: /data/test_reports
+      - type: bind
+        source: ./runtime/assets
+        target: /data/assets
+        read_only: true
     security_opt:
       - no-new-privileges:true
     command:
       - ros2
       - launch
       - omokai_bringup
-      - core_navigation.launch.py
-      - gui:=false
+      - ${OMOKAI_LAUNCH_FILE:-core_navigation.launch.py}
+      - gui:=${OMOKAI_GUI:-false}
+      - map:=${OMOKAI_MAP_FILE:-unused}
     healthcheck:
       test: ["CMD", "/usr/local/bin/omokai-healthcheck"]
       interval: 5s

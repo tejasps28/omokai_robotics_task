@@ -6,6 +6,7 @@
   <description>Simulation bringup and foundation checks for the Omokai ground robot.</description>
   <maintainer email="tejasps28@gmail.com">Tejas</maintainer>
   <license>Apache-2.0</license>
+  <license>GPL-3.0-only</license>
 
   <buildtool_depend>ament_python</buildtool_depend>
 
@@ -16,16 +17,29 @@
   <exec_depend>nav_msgs</exec_depend>
   <exec_depend>nav2_bringup</exec_depend>
   <exec_depend>omokai_executor</exec_depend>
+  <exec_depend>omokai_fleet</exec_depend>
+  <exec_depend>omokai_following</exec_depend>
   <exec_depend>omokai_interfaces</exec_depend>
   <exec_depend>omokai_mission</exec_depend>
   <exec_depend>omokai_pipeline</exec_depend>
+  <exec_depend>omokai_perception</exec_depend>
+  <exec_depend>python3-yaml</exec_depend>
+  <exec_depend>python3-numpy</exec_depend>
   <exec_depend>rclpy</exec_depend>
+  <exec_depend>robot_state_publisher</exec_depend>
+  <exec_depend>ros_gz_bridge</exec_depend>
   <exec_depend>ros_gz_sim</exec_depend>
   <exec_depend>rosgraph_msgs</exec_depend>
+  <exec_depend>rviz2</exec_depend>
   <exec_depend>sensor_msgs</exec_depend>
+  <exec_depend>slam_toolbox</exec_depend>
+  <exec_depend>std_msgs</exec_depend>
   <exec_depend>tf2_msgs</exec_depend>
+  <exec_depend>tf2_ros</exec_depend>
   <exec_depend>turtlebot3_gazebo</exec_depend>
   <exec_depend>turtlebot3_navigation2</exec_depend>
+
+  <test_depend>python3-pytest</test_depend>
 
   <export>
     <build_type>ament_python</build_type>

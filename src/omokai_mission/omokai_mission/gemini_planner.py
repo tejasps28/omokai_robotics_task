@@ -23,7 +23,7 @@ from .openai_planner import _SYSTEM_INSTRUCTIONS, _structured_output_schema
 
 
 GEMINI_API_BASE_URL = 'https://generativelanguage.googleapis.com/v1beta'
-DEFAULT_GEMINI_MODEL = 'gemini-2.5-flash'
+DEFAULT_GEMINI_MODEL = 'gemini-3.6-flash'
 DEFAULT_TIMEOUT_SEC = 30.0
 DEFAULT_MAX_OUTPUT_TOKENS = 1024
 

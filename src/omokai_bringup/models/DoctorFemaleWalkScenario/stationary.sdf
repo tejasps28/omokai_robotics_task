@@ -1,0 +1,12 @@
+<?xml version="1.0"?>
+<sdf version="1.9">
+  <actor name="actor">
+    <skin>
+      <filename>model://DoctorFemaleWalk/meshes/DoctorFemaleWalk.dae</filename>
+      <scale>1.0</scale>
+    </skin>
+    <pose>0 0 0 0 0 0</pose>
+    <!-- No animation and no motion plugin: the target is spatially and
+         visually frozen for the stationary-person detector regression. -->
+  </actor>
+</sdf>

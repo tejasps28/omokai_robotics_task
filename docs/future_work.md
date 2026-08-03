@@ -6,34 +6,37 @@ control. The same boundary applies to the additional challenges.
 
 ## SLAM and autonomous navigation
 
-SLAM Toolbox would consume LiDAR, odometry, and transforms to build and save a
-2D map and pose graph. Mapping and localization would be separate operating
-modes:
+This challenge is implemented. SLAM Toolbox consumes LiDAR, odometry, and
+transforms to build and save a 2D occupancy map. Mapping and localization are
+separate operating modes:
 
 - mapping mode builds the map and selects safe frontiers through a
   deterministic exploration node;
 - navigation mode reloads the map, localizes with Nav2, and accepts named
-  destinations or locally validated exploration regions.
+  destinations.
 
-Acceptance would include map creation from an unknown world, serialization,
-reload, loop-closure behavior, and obstacle-aware navigation to named goals.
+The acceptance workflow covers map creation from an unknown world,
+serialization, reload, and obstacle-aware navigation to two named goals. See
+[SLAM and autonomous navigation](slam.md).
 
 ## Vision target detection and following
 
-The perception path would separate detector, tracker, target localizer,
-snapshot notification, and follower. The operator would configure the target
-class and confidence threshold through the mission schema.
+This challenge is implemented. A local YOLOX person detector, deterministic
+coat-colour selector, temporal identity tracker, aligned RGB-D localizer,
+exactly-once snapshot path, and bounded follower run in a dedicated room. The
+normal demonstration actor translates through a closed patrol; a stationary
+override and red-coat distractor support controlled identity tests.
 
-On first confirmed detection, the system would store a timestamped image for
-the operator. Depth or LiDAR association would estimate the target in the map
-frame. A deterministic follower—not the LLM—would continuously send bounded
-standoff goals to Nav2. Target loss, maximum pursuit time/distance, map bounds,
-and emergency stop would remain local safety constraints.
+The LLM remains outside perception and motion control. Target loss,
+reacquisition, mission timeout, velocity limits, stand-off, protected-sector
+depth, cancellation, and zero-on-exit behavior are enforced locally. See
+[vision target detection and following](vision.md).
 
 ## Multi-robot coordination
 
-Three namespaced robots would run independent Nav2 stacks. A centralized
-coordinator would convert validated squad intent into per-robot plans:
+This challenge is implemented. Three namespaced robots run independent Nav2
+stacks. A centralized coordinator converts validated squad intent into
+per-robot plans:
 
 - split a route by path length;
 - maintain line or wedge offsets in the map frame;
@@ -42,8 +45,9 @@ coordinator would convert validated squad intent into per-robot plans:
 - regroup at explicit poses;
 - degrade safely if one robot fails.
 
-The model would choose only squad-level intent. Assignment, formation geometry,
-collision avoidance, and recovery would be deterministic and auditable.
+The model chooses only squad-level intent. Assignment, formation geometry,
+separation, cancellation, and recovery remain deterministic and auditable.
+See [multi-robot formation and coordination](multi_robot.md).
 
 ## Scaling to hardware
 
